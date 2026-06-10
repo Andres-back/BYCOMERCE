@@ -1,0 +1,1130 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  SUPER_ADMIN
+  ADMIN_NEGOCIO
+  SUPERVISOR
+  CAJERO
+  DOMICILIARIO
+}
+
+enum EstadoGeneral {
+  ACTIVO
+  INACTIVO
+  PENDIENTE
+  SUSPENDIDO
+  CANCELADO
+}
+
+enum SubscriptionStatus {
+  EN_PRUEBA
+  ACTIVA
+  VENCIDA
+  SUSPENDIDA
+  CANCELADA
+}
+
+enum InventoryMovementType {
+  ENTRADA
+  SALIDA
+  AJUSTE
+  DEVOLUCION
+  PERDIDA
+}
+
+enum StockReservationStatus {
+  ACTIVA
+  LIBERADA
+  CONSUMIDA
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+  MIXTO
+  CONTRA_ENTREGA
+}
+
+enum OrderStatus {
+  PENDIENTE
+  CONFIRMADO
+  PREPARANDO
+  LISTO_PARA_ENTREGA
+  EN_CAMINO
+  ENTREGADO
+  CANCELADO
+}
+
+enum CashRegisterStatus {
+  ABIERTA
+  CERRADA
+}
+
+enum CashMovementType {
+  VENTA
+  GASTO
+  INGRESO_MANUAL
+  AJUSTE
+  RETIRO
+  DEVOLUCION
+  APERTURA
+  CIERRE
+}
+
+enum RefreshRevokedReason {
+  LOGOUT
+  PASSWORD_CHANGE
+  ADMIN_REVOKE
+  SUSPICIOUS_ACTIVITY
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  COMPLETADO
+  FALLIDO
+  REVERSADO
+}
+
+model Tenant {
+  id            String        @id @default(uuid())
+  nombre        String
+  slug          String        @unique
+  tipoNegocio   String        @map("tipo_negocio")
+  planId        String?       @map("plan_id")
+  telefono      String?
+  whatsapp      String?
+  email         String?
+  direccion     String?
+  barrio        String?
+  ciudad        String        @default("Mocoa")
+  latitud       Float?
+  longitud      Float?
+  logo          String?
+  estado        EstadoGeneral @default(PENDIENTE)
+  multiSucursal Boolean       @default(false) @map("multi_sucursal")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  plan              Plan?               @relation(fields: [planId], references: [id])
+  users             User[]
+  subscriptions     Subscription[]
+  categories        Category[]
+  products          Product[]
+  productVariants   ProductVariant[]
+  productSuppliers  ProductSupplier[]
+  suppliers         Supplier[]
+  purchases         Purchase[]
+  movements         InventoryMovement[]
+  stockReservations StockReservation[]
+  cashRegisters     CashRegister[]
+  cashMovements     CashMovement[]
+  customers         Customer[]
+  sales             Sale[]
+  saleRefunds       SaleRefund[]
+  expenses          Expense[]
+  orders            Order[]
+  deliveryConfig    DeliveryConfig?
+  businessSettings  BusinessSettings?
+  businessImages    BusinessImage[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+  payments          Payment[]
+  notifications     Notification[]
+  notificationTemplates     NotificationTemplate[]
+  notificationPreferences  NotificationPreference[]
+  promotions                Promotion[]
+  coupons                   Coupon[]
+  loyaltyProgram            LoyaltyProgram?
+  loyaltyPoints             LoyaltyPoint[]
+  loyaltyRewards            LoyaltyReward[]
+  loyaltyRedemptions        LoyaltyRedemption[]
+  branches                  TenantBranch[]
+
+  @@index([estado])
+  @@map("tenants")
+}
+
+model Role {
+  id          String        @id @default(uuid())
+  nombre      RoleName      @unique
+  descripcion String?
+  estado      EstadoGeneral @default(ACTIVO)
+
+  @@map("roles")
+}
+
+model Plan {
+  id               String        @id @default(uuid())
+  nombre           String        @unique
+  descripcion      String?
+  precio           Int
+  limiteUsuarios   Int           @map("limite_usuarios")
+  limiteProductos  Int           @map("limite_productos")
+  almacenamientoGb Int           @map("almacenamiento_gb")
+  caracteristicas  Json?
+  estado           EstadoGeneral @default(ACTIVO)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  tenants       Tenant[]
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                String             @id @default(uuid())
+  tenantId          String             @map("tenant_id")
+  planId            String             @map("plan_id")
+  fechaInicio       DateTime           @map("fecha_inicio")
+  fechaFin          DateTime           @map("fecha_fin")
+  fechaProximoCobro DateTime?          @map("fecha_proximo_cobro")
+  estado            SubscriptionStatus @default(EN_PRUEBA)
+  enPromocion       Boolean            @default(false) @map("en_promocion")
+  fechaFinPromocion DateTime?          @map("fecha_fin_promocion")
+  montoMensual      Int                @map("monto_mensual")
+  ultimoPago        DateTime?          @map("ultimo_pago")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, estado])
+  @@map("subscriptions")
+}
+
+model User {
+  id                  String        @id @default(uuid())
+  tenantId            String?       @map("tenant_id")
+  nombre              String
+  email               String
+  passwordHash        String        @map("password_hash")
+  rol                 RoleName
+  estado              EstadoGeneral @default(PENDIENTE)
+  ultimoAcceso        DateTime?     @map("ultimo_acceso")
+  isSuperAdmin        Boolean       @default(false) @map("is_super_admin")
+  failedLoginAttempts Int           @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime?     @map("locked_until")
+  lastPasswordChange  DateTime?     @map("last_password_change")
+  mustChangePassword  Boolean       @default(false) @map("must_change_password")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  tenant         Tenant?        @relation(fields: [tenantId], references: [id])
+  refreshTokens  RefreshToken[]
+  loginAttempts  LoginAttempt[]
+  auditLogs      AuditLog[]
+  sales          Sale[]
+  saleRefunds    SaleRefund[]
+  assignedOrders Order[]        @relation("OrderDeliveryUser")
+
+  @@unique([tenantId, email])
+  @@index([tenantId, id])
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id            String                @id @default(uuid())
+  userId        String                @map("user_id")
+  tenantId      String?               @map("tenant_id")
+  tokenHash     String                @map("token_hash")
+  jti           String                @unique
+  userAgent     String?               @map("user_agent")
+  ip            String?
+  expiresAt     DateTime              @map("expires_at")
+  revokedAt     DateTime?             @map("revoked_at")
+  revokedReason RefreshRevokedReason? @map("revoked_reason")
+  replacedBy    String?               @map("replaced_by")
+  createdAt     DateTime              @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  ip        String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_resets")
+}
+
+model LoginAttempt {
+  id            String   @id @default(uuid())
+  email         String
+  userId        String?  @map("user_id")
+  ip            String?
+  userAgent     String?  @map("user_agent")
+  success       Boolean
+  failureReason String?  @map("failure_reason")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([email, createdAt])
+  @@index([userId])
+  @@map("login_attempts")
+}
+
+model Category {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  nombre      String
+  descripcion String?
+  estado      EstadoGeneral @default(ACTIVO)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  products Product[]
+
+  @@unique([tenantId, nombre])
+  @@index([tenantId, id])
+  @@map("categories")
+}
+
+model Product {
+  id              String        @id @default(uuid())
+  tenantId        String        @map("tenant_id")
+  categoryId      String?       @map("category_id")
+  sku             String?
+  barcode         String?
+  nombre          String
+  descripcion     String?
+  marca           String?
+  costo           Int           @default(0)
+  precio          Int
+  stock           Int           @default(0)
+  stockMinimo     Int           @default(0) @map("stock_minimo")
+  imagenPrincipal String?       @map("imagen_principal")
+  estado          EstadoGeneral @default(ACTIVO)
+  destacado       Boolean       @default(false)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  category           Category?           @relation(fields: [categoryId], references: [id])
+  images             ProductImage[]
+  variants           ProductVariant[]
+  suppliers          ProductSupplier[]
+  purchaseItems      PurchaseItem[]
+  inventoryMovements InventoryMovement[]
+  stockReservations  StockReservation[]
+  saleItems          SaleItem[]
+  saleRefundItems    SaleRefundItem[]
+  orderItems         OrderItem[]
+  promotionProducts  PromotionProduct[]
+
+  @@unique([tenantId, sku])
+  @@unique([tenantId, barcode])
+  @@index([tenantId, id])
+  @@index([tenantId, nombre])
+  @@index([tenantId, categoryId])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String @id @default(uuid())
+  productId String @map("product_id")
+  url       String
+  orden     Int    @default(0)
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id             String        @id @default(uuid())
+  tenantId       String        @map("tenant_id")
+  productId      String        @map("product_id")
+  sku            String?
+  nombre         String
+  atributos      Json
+  precio         Int
+  costo          Int           @default(0)
+  stock          Int           @default(0)
+  stockReservado Int           @default(0) @map("stock_reservado")
+  estado         EstadoGeneral @default(ACTIVO)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  product           Product            @relation(fields: [productId], references: [id])
+  stockReservations StockReservation[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId, id])
+  @@index([tenantId, productId])
+  @@map("product_variants")
+}
+
+model ProductSupplier {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  productId   String   @map("product_id")
+  supplierId  String   @map("supplier_id")
+  costo       Int
+  esPrincipal Boolean  @default(false) @map("es_principal")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@unique([tenantId, productId, supplierId])
+  @@index([tenantId, id])
+  @@map("product_supplier")
+}
+
+model Supplier {
+  id            String        @id @default(uuid())
+  tenantId      String        @map("tenant_id")
+  nombre        String
+  telefono      String?
+  email         String?
+  direccion     String?
+  observaciones String?
+  estado        EstadoGeneral @default(ACTIVO)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id])
+  products  ProductSupplier[]
+  purchases Purchase[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, estado])
+  @@map("suppliers")
+}
+
+model Purchase {
+  id            String        @id @default(uuid())
+  tenantId      String        @map("tenant_id")
+  supplierId    String?       @map("supplier_id")
+  numeroFactura String?       @map("numero_factura")
+  total         Int
+  fechaCompra   DateTime      @map("fecha_compra")
+  observaciones String?
+  estado        EstadoGeneral @default(ACTIVO)
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id])
+  supplier Supplier?      @relation(fields: [supplierId], references: [id])
+  items    PurchaseItem[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, supplierId])
+  @@index([tenantId, estado])
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id            String @id @default(uuid())
+  purchaseId    String @map("purchase_id")
+  productId     String @map("product_id")
+  cantidad      Int
+  costoUnitario Int    @map("costo_unitario")
+  subtotal      Int
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@index([purchaseId])
+  @@index([productId])
+  @@map("purchase_items")
+}
+
+model InventoryMovement {
+  id            String                @id @default(uuid())
+  tenantId      String                @map("tenant_id")
+  productId     String                @map("product_id")
+  tipo          InventoryMovementType
+  cantidad      Int
+  stockAnterior Int                   @map("stock_anterior")
+  stockNuevo    Int                   @map("stock_nuevo")
+  observacion   String?
+  usuarioId     String?               @map("usuario_id")
+  fecha         DateTime              @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, productId, fecha])
+  @@map("inventory_movements")
+}
+
+model StockReservation {
+  id              String                 @id @default(uuid())
+  tenantId        String                 @map("tenant_id")
+  productId       String                 @map("product_id")
+  variantId       String?                @map("variant_id")
+  orderId         String                 @map("order_id")
+  cantidad        Int
+  estado          StockReservationStatus @default(ACTIVA)
+  fechaExpiracion DateTime               @map("fecha_expiracion")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id])
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+  order   Order           @relation(fields: [orderId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, productId])
+  @@index([tenantId, orderId])
+  @@map("stock_reservations")
+}
+
+model CashRegister {
+  id            String             @id @default(uuid())
+  tenantId      String             @map("tenant_id")
+  usuarioId     String             @map("usuario_id")
+  fechaApertura DateTime           @map("fecha_apertura")
+  fechaCierre   DateTime?          @map("fecha_cierre")
+  saldoInicial  Int                @map("saldo_inicial")
+  saldoFinal    Int?               @map("saldo_final")
+  estado        CashRegisterStatus @default(ABIERTA)
+
+  tenant    Tenant         @relation(fields: [tenantId], references: [id])
+  movements CashMovement[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, usuarioId])
+  @@map("cash_registers")
+}
+
+model CashMovement {
+  id             String           @id @default(uuid())
+  tenantId       String           @map("tenant_id")
+  cashRegisterId String           @map("cash_register_id")
+  tipo           CashMovementType
+  monto          Int
+  descripcion    String?
+  referenciaId   String?          @map("referencia_id")
+  referenciaTipo String?          @map("referencia_tipo")
+  usuarioId      String?          @map("usuario_id")
+  fecha          DateTime         @default(now())
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, cashRegisterId])
+  @@map("cash_movements")
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  nombre        String
+  telefono      String
+  email         String?
+  direccion     String?
+  latitud       Float?
+  longitud      Float?
+  observaciones String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant              Tenant                @relation(fields: [tenantId], references: [id])
+  sales               Sale[]
+  orders              Order[]
+  loyaltyPoints       LoyaltyPoint[]
+  loyaltyRedemptions  LoyaltyRedemption[]
+
+  @@unique([tenantId, telefono])
+  @@index([tenantId, id])
+  @@map("customers")
+}
+
+model Sale {
+  id         String        @id @default(uuid())
+  tenantId   String        @map("tenant_id")
+  customerId String?       @map("customer_id")
+  usuarioId  String        @map("usuario_id")
+  subtotal   Int
+  descuento  Int           @default(0)
+  impuestos  Int           @default(0)
+  total      Int
+  metodoPago PaymentMethod @map("metodo_pago")
+  estado     EstadoGeneral @default(ACTIVO)
+  fecha      DateTime      @default(now())
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id])
+  customer Customer?     @relation(fields: [customerId], references: [id])
+  user     User          @relation(fields: [usuarioId], references: [id])
+  items    SaleItem[]
+  payments SalePayment[]
+  refunds  SaleRefund[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, fecha])
+  @@index([tenantId, estado])
+  @@map("sales")
+}
+
+model SaleItem {
+  id             String @id @default(uuid())
+  saleId         String @map("sale_id")
+  productId      String @map("product_id")
+  cantidad       Int
+  precioUnitario Int    @map("precio_unitario")
+  subtotal       Int
+
+  sale        Sale             @relation(fields: [saleId], references: [id])
+  product     Product          @relation(fields: [productId], references: [id])
+  refundItems SaleRefundItem[]
+
+  @@index([saleId])
+  @@index([productId])
+  @@map("sale_items")
+}
+
+model SaleRefund {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  saleId    String   @map("sale_id")
+  usuarioId String   @map("usuario_id")
+  total     Int
+  motivo    String?
+  fecha     DateTime @default(now())
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id])
+  sale   Sale             @relation(fields: [saleId], references: [id])
+  user   User             @relation(fields: [usuarioId], references: [id])
+  items  SaleRefundItem[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, saleId])
+  @@map("sale_refunds")
+}
+
+model SaleRefundItem {
+  id         String @id @default(uuid())
+  refundId   String @map("refund_id")
+  saleItemId String @map("sale_item_id")
+  productId  String @map("product_id")
+  cantidad   Int
+  monto      Int
+
+  refund   SaleRefund @relation(fields: [refundId], references: [id])
+  saleItem SaleItem   @relation(fields: [saleItemId], references: [id])
+  product  Product    @relation(fields: [productId], references: [id])
+
+  @@index([refundId])
+  @@index([saleItemId])
+  @@index([productId])
+  @@map("sale_refund_items")
+}
+
+model SalePayment {
+  id                String        @id @default(uuid())
+  saleId            String        @map("sale_id")
+  tenantId          String        @map("tenant_id")
+  metodo            PaymentMethod
+  monto             Int
+  referenciaExterna String?       @map("referencia_externa")
+  fecha             DateTime      @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([saleId])
+  @@map("sale_payments")
+}
+
+model Expense {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  usuarioId      String   @map("usuario_id")
+  categoria      String
+  descripcion    String
+  valor          Int
+  comprobanteUrl String?  @map("comprobante_url")
+  fecha          DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, fecha])
+  @@map("expenses")
+}
+
+model Order {
+  id                 String        @id @default(uuid())
+  tenantId           String        @map("tenant_id")
+  customerId         String?       @map("customer_id")
+  deliveryUserId     String?       @map("delivery_user_id")
+  subtotal           Int
+  costoDomicilio     Int           @default(0) @map("costo_domicilio")
+  total              Int
+  metodoPago         PaymentMethod @default(CONTRA_ENTREGA) @map("metodo_pago")
+  estado             OrderStatus   @default(PENDIENTE)
+  direccion          String
+  latitud            Float?
+  longitud           Float?
+  observaciones      String?
+  deliveryAssignedAt DateTime?     @map("delivery_assigned_at")
+  deliveredAt        DateTime?     @map("delivered_at")
+  fecha              DateTime      @default(now())
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  customer          Customer?          @relation(fields: [customerId], references: [id])
+  deliveryUser      User?              @relation("OrderDeliveryUser", fields: [deliveryUserId], references: [id])
+  items             OrderItem[]
+  stockReservations StockReservation[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, estado])
+  @@index([tenantId, deliveryUserId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String @id @default(uuid())
+  orderId        String @map("order_id")
+  productId      String @map("product_id")
+  cantidad       Int
+  precioUnitario Int    @map("precio_unitario")
+  subtotal       Int
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model DeliveryConfig {
+  id            String   @id @default(uuid())
+  tenantId      String   @unique @map("tenant_id")
+  activo        Boolean  @default(false)
+  costoBase     Int      @default(400000) @map("costo_base")
+  radioKm       Float    @default(3) @map("radio_km")
+  horarioInicio String?  @map("horario_inicio")
+  horarioFin    String?  @map("horario_fin")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id])
+  @@map("delivery_config")
+}
+
+model BusinessSettings {
+  id                String   @id @default(uuid())
+  tenantId          String   @unique @map("tenant_id")
+  logo              String?
+  banner            String?
+  eslogan           String?  @map("eslogan")
+  whatsapp          String?
+  facebook          String?
+  instagram         String?
+  tiktok            String?
+  youtube           String?
+  sitioWeb          String?  @map("sitio_web")
+  colorPrimario     String?  @map("color_primario")
+  colorSecundario   String?  @map("color_secundario")
+  colorAcento       String?  @map("color_acento")
+  fuente            String?  @default("Inter")
+  modoTema          String?  @default("CLARO") @map("modo_tema")
+  radioTarjeta      String?  @default("MEDIO") @map("radio_tarjeta")
+  mostrarPrecios    Boolean  @default(true) @map("mostrar_precios")
+  mostrarStock      Boolean  @default(true) @map("mostrar_stock")
+  textoBienvenida   String?  @map("texto_bienvenida")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id])
+  @@map("business_settings")
+}
+
+model BusinessImage {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  url        String
+  titulo     String?
+  descripcion String?
+  orden      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, id])
+  @@index([tenantId, orden])
+  @@map("business_images")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String?  @map("tenant_id")
+  usuarioId String?  @map("usuario_id")
+  accion    String
+  entidad   String
+  entidadId String?  @map("entidad_id")
+  oldValue  Json?    @map("old_value")
+  newValue  Json?    @map("new_value")
+  ip        String?
+  userAgent String?  @map("user_agent")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  user   User?   @relation(fields: [usuarioId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, accion, createdAt])
+  @@index([tenantId, usuarioId, createdAt])
+  @@index([tenantId, entidad, entidadId, createdAt])
+  @@map("audit_logs")
+}
+
+model Payment {
+  id                 String        @id @default(uuid())
+  tenantId           String        @map("tenant_id")
+  tipo               String
+  referenciaId       String        @map("referencia_id")
+  metodo             PaymentMethod
+  monto              Int
+  comisionPlataforma Int           @default(0) @map("comision_plataforma")
+  estado             PaymentStatus @default(PENDIENTE)
+  comprobanteUrl     String?       @map("comprobante_url")
+  observaciones      String?
+  usuarioId          String?       @map("usuario_id")
+  fechaPago          DateTime?     @map("fecha_pago")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, referenciaId])
+  @@map("payments")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+    userId    String?   @map("user_id")
+  tipo      String
+  titulo    String
+  mensaje   String
+  level     String    @default("INFO")
+  data      Json?
+  leida     Boolean   @default(false)
+  leidaAt   DateTime? @map("leida_at")
+  actionUrl String?   @map("action_url")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, userId, createdAt])
+  @@index([tenantId, userId, leida, createdAt])
+  @@map("notifications")
+}
+
+model NotificationTemplate {
+  id        String        @id @default(uuid())
+  tenantId  String        @map("tenant_id")
+  tipo      String
+  titulo    String
+  mensaje   String
+  canales   Json          @default("[\"in_app\"]")
+  criticidad String       @default("INFO")
+  activo    Boolean       @default(true)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, tipo])
+  @@index([tenantId])
+  @@map("notification_templates")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  usuarioId String   @map("usuario_id")
+  tipo      String
+  canal     String   @default("in_app")
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, usuarioId, tipo, canal])
+  @@index([tenantId, usuarioId])
+  @@map("notification_preferences")
+}
+
+enum PromotionType {
+  PORCENTAJE
+  MONTO_FIJO
+  PRECIO_FIJO
+  N_X_M
+  COMBO
+  ENVIO_GRATIS
+}
+
+enum PromotionScope {
+  GLOBAL
+  CATEGORIA
+  PRODUCTO
+  CLIENTE_SEGMENTO
+}
+
+enum CouponType {
+  PORCENTAJE
+  MONTO_FIJO
+}
+
+model Promotion {
+  id             String        @id @default(uuid())
+  tenantId       String        @map("tenant_id")
+  nombre         String
+  descripcion    String?
+  tipo           PromotionType
+  alcance        PromotionScope
+  valor          Int
+  valorMaximo    Int?          @map("valor_maximo")
+  minCompra      Int?          @map("min_compra")
+  minItems       Int?          @map("min_items")
+  cantidadGratis Int?          @map("cantidad_gratis")
+  fechaInicio    DateTime      @map("fecha_inicio")
+  fechaFin       DateTime      @map("fecha_fin")
+  diasSemana     Json?         @map("dias_semana")
+  horarioInicio  String?       @map("horario_inicio")
+  horarioFin     String?       @map("horario_fin")
+  segmento       String?
+  maxUsos        Int?          @map("max_usuarios")
+  usosActuales   Int           @default(0) @map("usos_actuales")
+  maxUsosCliente Int?          @map("max_usuarios_cliente")
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  tenant   Tenant             @relation(fields: [tenantId], references: [id])
+  products PromotionProduct[]
+  coupons  Coupon[]
+
+  @@index([tenantId])
+  @@map("promotions")
+}
+
+model PromotionProduct {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  promotionId String   @map("promotion_id")
+  productId   String   @map("product_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([promotionId, productId])
+  @@map("promotion_products")
+}
+
+model Coupon {
+  id             String       @id @default(uuid())
+  tenantId       String       @map("tenant_id")
+  codigo         String
+  promotionId    String?      @map("promotion_id")
+  tipo           CouponType
+  valor          Int
+  valorMaximo    Int?         @map("valor_maximo")
+  minCompra      Int?         @map("min_compra")
+  usosMaximos    Int?         @map("usos_maximos")
+  usosActuales   Int          @default(0) @map("usos_actuales")
+  maxUsosCliente Int?         @map("max_usuarios_cliente")
+  fechaExpiracion DateTime?   @map("fecha_expiracion")
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id])
+  promotion Promotion?        @relation(fields: [promotionId], references: [id])
+  usages    CouponRedemption[]
+
+  @@unique([tenantId, codigo])
+  @@index([tenantId])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id        String   @id @default(uuid())
+  couponId  String   @map("coupon_id")
+  orderId   String?  @map("order_id")
+  saleId    String?  @map("sale_id")
+  usuarioId String?  @map("usuario_id")
+  clienteId String?  @map("cliente_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@map("coupon_redemptions")
+}
+
+model LoyaltyProgram {
+  id                String   @id @default(uuid())
+  tenantId          String   @unique @map("tenant_id")
+  activo            Boolean  @default(true)
+  puntosPorPeso     Int      @default(100) @map("puntos_por_peso")
+  pesoPorPunto      Int      @default(100) @map("peso_por_punto")
+  expiracionDias    Int      @default(365) @map("expiracion_dias")
+  puntosBienvenida  Int      @default(0) @map("puntos_bienvenida")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tiers  LoyaltyTier[]
+  rules  LoyaltyRule[]
+
+  @@map("loyalty_programs")
+}
+
+model LoyaltyTier {
+  id           String  @id @default(uuid())
+  programId    String  @map("program_id")
+  nombre       String
+  nivel        Int     @default(1)
+  color        String? @default("#6B7280")
+  multiplicador Float  @default(1.0)
+  puntosMinimos Int    @default(0) @map("puntos_minimos")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@unique([programId, nivel])
+  @@map("loyalty_tiers")
+}
+
+model LoyaltyRule {
+  id        String  @id @default(uuid())
+  programId String  @map("program_id")
+  tipo      String
+  valor     Int
+  activo    Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_rules")
+}
+
+model LoyaltyPoint {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  customerId String   @map("customer_id")
+  tipo       String
+  puntos     Int
+  saldoPost  Int      @map("saldo_post")
+  referencia String?
+  referenciaId String? @map("referencia_id")
+  expiraEn   DateTime? @map("expira_en")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId, customerId])
+  @@map("loyalty_points")
+}
+
+model LoyaltyReward {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  nombre      String
+  descripcion String?
+  tipo        String
+  valor       Int
+  puntosNecesarios Int      @map("puntos_necesarios")
+  stock       Int           @default(0)
+  imagen      String?
+  activo      Boolean       @default(true)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  redemptions LoyaltyRedemption[]
+
+  @@index([tenantId])
+  @@map("loyalty_rewards")
+}
+
+model LoyaltyRedemption {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  customerId String  @map("customer_id")
+  rewardId  String   @map("reward_id")
+  puntosUsados Int   @map("puntos_usados")
+  saleId    String?  @map("sale_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id])
+  customer Customer      @relation(fields: [customerId], references: [id])
+  reward   LoyaltyReward @relation(fields: [rewardId], references: [id])
+
+  @@index([tenantId, customerId])
+  @@map("loyalty_redemptions")
+}
+
+model TenantBranch {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  nombre      String
+  codigo      String?
+  direccion   String?
+  telefono    String?
+  barrio      String?
+  ciudad      String        @default("Mocoa")
+  latitud     Float?
+  longitud    Float?
+  horarioInicio String?     @map("horario_inicio")
+  horarioFin  String?       @map("horario_fin")
+  esPrincipal Boolean       @default(false) @map("es_principal")
+  estado      EstadoGeneral @default(ACTIVO)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, codigo])
+  @@index([tenantId])
+  @@map("tenant_branches")
+}

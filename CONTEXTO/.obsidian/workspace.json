@@ -1,0 +1,231 @@
+{
+  "main": {
+    "id": "f571f2522cad1fa6",
+    "type": "split",
+    "children": [
+      {
+        "id": "5e49b1183886d959",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "60c8a2251be1dc2f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "NEGOCIO.MD",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "NEGOCIO"
+            }
+          },
+          {
+            "id": "178827fad1b3f314",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "LOGGING.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "LOGGING"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f5dbcc0e7807ad40",
+    "type": "split",
+    "children": [
+      {
+        "id": "9f356d55274dcfe5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6457f23630d881b3",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          },
+          {
+            "id": "1541b0b03bdd2669",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
+            }
+          },
+          {
+            "id": "47e1291398ac8964",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "45083e53388d2b2d",
+    "type": "split",
+    "children": [
+      {
+        "id": "45ed40a84c6d1f37",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "873784e4c48c4e03",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "MARKETPLACE.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Enlaces entrantes de MARKETPLACE"
+            }
+          },
+          {
+            "id": "9db39684c194a6b8",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "MARKETPLACE.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes de MARKETPLACE"
+            }
+          },
+          {
+            "id": "f522c62c621745ca",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "7fee4560635dc43a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas las propiedades"
+            }
+          },
+          {
+            "id": "c410b31ad35e21f6",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "MARKETPLACE.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Esquema de MARKETPLACE"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false
+    }
+  },
+  "active": "178827fad1b3f314",
+  "lastOpenFiles": [
+    "CONTEXTO_GLOBAL.md",
+    "BACKUPS.md",
+    "Base Datos.md",
+    "BITACORA.md",
+    "PROMPT_INICIO.md",
+    "FRONTEND_STACK.md",
+    "RBAC.md",
+    "INDEX.md",
+    "ANALISIS_GAPS.md",
+    "SOPORTE.md",
+    "GEOLOCALIZACION.md",
+    "INTEGRACIONES.md",
+    "TESTING.md",
+    "LOGGING.md",
+    "MONITOREO.md",
+    "SEGURIDAD.md",
+    "CI_CD.md",
+    "DEPLOYMENT.md",
+    "SUCURSALES.md",
+    "FIDELIZACION.md",
+    "WHATSAPP.md",
+    "NOTIFICACIONES.md",
+    "PROMOCIONES.md",
+    "SUSCRIPCIONES.md",
+    "PAGOS.md",
+    "CACHE.md",
+    "Sin título.canvas"
+  ]
+}
