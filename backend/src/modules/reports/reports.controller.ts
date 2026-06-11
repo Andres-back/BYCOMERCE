@@ -14,31 +14,31 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('dashboard')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.SUPER_ADMIN)
   dashboard(@CurrentUser() user: RequestUser, @Query() query: ReportQueryDto) {
     return this.reportsService.getDashboard(user, query);
   }
 
   @Get('sales')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.SUPER_ADMIN)
   sales(@CurrentUser() user: RequestUser, @Query() query: ReportQueryDto) {
     return this.reportsService.getSalesReport(user, query);
   }
 
   @Get('products')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.SUPER_ADMIN)
   products(@CurrentUser() user: RequestUser, @Query() query: ReportQueryDto) {
     return this.reportsService.getProductsReport(user, query);
   }
 
   @Get('inventory')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.SUPER_ADMIN)
   inventory(@CurrentUser() user: RequestUser) {
     return this.reportsService.getInventoryReport(user);
   }
 
   @Get('customers')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.SUPER_ADMIN)
   customers(@CurrentUser() user: RequestUser, @Query() query: ReportQueryDto) {
     return this.reportsService.getCustomersReport(user, query);
   }

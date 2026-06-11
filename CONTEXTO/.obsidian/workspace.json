@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "LOGGING.md",
+                "file": "CREDENCIALES.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "LOGGING"
+              "title": "CREDENCIALES"
             }
           }
         ],
@@ -200,6 +200,7 @@
   },
   "active": "178827fad1b3f314",
   "lastOpenFiles": [
+    "LOGGING.md",
     "CONTEXTO_GLOBAL.md",
     "BACKUPS.md",
     "Base Datos.md",
@@ -213,7 +214,6 @@
     "GEOLOCALIZACION.md",
     "INTEGRACIONES.md",
     "TESTING.md",
-    "LOGGING.md",
     "MONITOREO.md",
     "SEGURIDAD.md",
     "CI_CD.md",

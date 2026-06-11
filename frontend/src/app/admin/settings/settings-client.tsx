@@ -32,6 +32,7 @@ import {
 } from '@/services/tenant/tenant.service';
 import { useAuthStore } from '@/stores/auth-store';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { PageHeader } from '@/components/layouts/page-header';
 import { getPreferences, updatePreferences } from '@/services/notifications/notifications.service';
 
@@ -327,6 +328,7 @@ export default function SettingsClient() {
 
   return (
     <FadeIn as="main" className="space-y-6">
+      <Breadcrumbs />
       <PageHeader title="Configuración" description="Personaliza tu negocio, branding, vitrina pública y delivery.">
         <Button variant="outline" size="icon" onClick={() => qc.invalidateQueries({ queryKey: queryKeys.tenant.profile })} title="Actualizar">
           <RefreshCw className="size-4" />

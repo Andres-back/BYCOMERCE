@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -14,17 +14,11 @@ import { useSocket } from '@/hooks/use-socket';
 import { NotificationBell } from '@/components/shared/notification-bell';
 import { BrandingProvider, useBranding } from '@/providers/branding-provider';
 import { AppIcon } from '@/components/shared/app-icon';
+import { CommandPalette } from '@/components/shared/command-palette';
+import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
 type RoleAccess = 'ADMIN_NEGOCIO' | 'SUPERVISOR' | 'CAJERO' | 'DOMICILIARIO';
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: string;
-  exact?: boolean;
-  roles: RoleAccess[];
-}
 
 const navGroups = [
   {
@@ -87,7 +81,7 @@ function NavLink({ href, label, icon, exact, pathname, collapsed }: {
         'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
         active
           ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/25'
-          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
       )}
       title={collapsed ? label : undefined}
     >
@@ -101,12 +95,12 @@ function SidebarContent({ pathname }: { pathname: string }) {
   const { user, logout, isSuperAdmin } = useAuth();
   const branding = useBranding();
   const initials = user?.nombre?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '??';
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed] = useState(false);
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--color-sidebar)' }}>
       {/* Logo */}
-      <div className={cn('flex items-center gap-3 border-b border-gray-100 px-4', collapsed ? 'justify-center py-4' : 'py-4')}>
+      <div className={cn('flex items-center gap-3 border-b border-sidebar-border px-4', collapsed ? 'justify-center py-4' : 'py-4')}>
         {branding.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={branding.logo} alt={branding.businessName} className="size-9 rounded-xl object-cover ring-2 ring-teal-100" />
@@ -115,8 +109,8 @@ function SidebarContent({ pathname }: { pathname: string }) {
         )}
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-bold text-gray-900">{branding.businessName}</p>
-            <p className="truncate text-xs text-gray-500">Panel de administración</p>
+            <p className="truncate text-sm font-bold text-foreground">{branding.businessName}</p>
+            <p className="truncate text-xs text-muted-foreground">Panel de administración</p>
           </div>
         )}
       </div>
@@ -142,7 +136,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
           return (
             <div key={group.label} className="space-y-1">
               {!collapsed && (
-                <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                   {group.label}
                 </p>
               )}
@@ -172,7 +166,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       {/* User */}
       <Separator />
       <div className="p-3">
-        <div className={cn('flex items-center gap-3 rounded-xl px-2 py-2', !collapsed && 'hover:bg-gray-50')}>
+        <div className={cn('flex items-center gap-3 rounded-xl px-2 py-2', !collapsed && 'hover:bg-muted/50')}>
           <Avatar className="size-9 ring-2 ring-teal-100">
             <AvatarFallback className="bg-gradient-to-br from-teal-500 to-emerald-500 text-xs font-bold text-white">
               {initials}
@@ -180,14 +174,14 @@ function SidebarContent({ pathname }: { pathname: string }) {
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium text-gray-900">{user?.nombre}</p>
-              <p className="truncate text-xs text-gray-500">{user?.email}</p>
+              <p className="truncate text-sm font-medium text-foreground">{user?.nombre}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+            className="size-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             onClick={() => { logout(); window.location.href = '/auth/login'; }}
             title="Cerrar sesión"
           >
@@ -202,22 +196,24 @@ function SidebarContent({ pathname }: { pathname: string }) {
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   useSocket();
-  const { isSuperAdmin } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <BrandingProvider>
-      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50">
+      <CommandPalette />
+      <div className="admin-shell-bg flex min-h-screen">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-white shadow-sm lg:block">
+        <aside className="hidden w-64 shrink-0 border-r border-border shadow-sm lg:block" style={{ backgroundColor: 'var(--color-sidebar)' }}>
           <SidebarContent pathname={pathname} />
         </aside>
 
         {/* Main */}
         <div className="flex flex-1 flex-col">
           {/* Header */}
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-gray-200 bg-white/80 px-4 backdrop-blur-xl lg:px-6">
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/88 px-4 backdrop-blur-xl lg:px-6">
             <Sheet>
-              <SheetTrigger render={<Button variant="outline" size="icon" className="lg:hidden border-gray-200" />}>
+              <SheetTrigger render={<Button variant="outline" size="icon" className="lg:hidden border-border" />}>
                 <Menu className="size-4" />
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0">
@@ -229,10 +225,17 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
 
             {/* Header Right */}
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title={isDark ? 'Modo claro' : 'Modo oscuro'}
+              >
+                {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              </button>
               <NotificationBell />
               <Link
                 href="/"
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <AppIcon name="tienda" className="size-4" />
                 <span className="hidden sm:inline">Tienda</span>

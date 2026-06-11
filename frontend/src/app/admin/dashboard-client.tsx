@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getDashboardReport, getSalesReport, getInventoryReport } from '@/services/reports/reports.service';
 import { queryKeys } from '@/lib/query-keys';
 import { formatCopCentavos, formatNumber, formatDate, orderStatusLabels, orderStatusColors } from '@/lib/format';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { PageHeader } from '@/components/layouts/page-header';
 import { StatCard } from '@/components/shared/stat-card';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
@@ -105,6 +106,7 @@ export default function DashboardClient() {
 
   return (
     <FadeIn as="main" className="space-y-6">
+      <Breadcrumbs />
       <PageHeader title="Dashboard" description="Indicadores operativos y métricas del negocio">
         <div className="flex items-center gap-2">
           <div className="flex rounded-xl border border-gray-200 bg-white p-0.5 shadow-sm">

@@ -649,3 +649,107 @@ No se agrego carga directa de archivo en backend para evitar introducir Multer/s
 - Probar import/export contra base real cuando Docker/Postgres este disponible.
 - Agregar plantilla descargable vacia.
 - Agregar importacion Excel cuando se active manejo formal de archivos.
+
+---
+
+## 2026-06-10 - Version 1.0 completa: 24 vistas, RBAC, GSAP, iconos premium
+
+### Contexto
+
+El proyecto alcanzo su version 1.0 completa con todos los modulos documentados implementados y funcionales.
+
+### Avance
+
+**Modulos nuevos implementados:**
+- `Promociones` (backend + frontend): CRUD de promociones y cupones, 4 modelos Prisma, 8 endpoints.
+- `Fidelizacion` (backend + frontend): programa de puntos, niveles, recompensas, historial por cliente.
+- `Sucursales` (backend + frontend): CRUD de sucursales, geolocalizacion, horarios.
+- `Ruta de entrega`: endpoint de optimizacion nearest-neighbor, mapa Leaflet con marcadores numerados y linea de ruta.
+
+**Mejoras UX:**
+- Paleta de comandos global (Cmd+K) para navegacion rapida entre modulos.
+- Breadcrumbs de navegacion en Dashboard, Clientes, Inventario, Pedidos, POS, Reportes, Settings.
+- Atajos de teclado en POS (F2 cobrar, F4 pago, Ctrl+F buscar, Ctrl+N nueva venta, Esc cancelar).
+- Transiciones de pagina con GSAP (fade + slide en cada navegacion).
+- Animaciones de entrada con ScrollTrigger (cards aparecen escalonadas al hacer scroll).
+- Indicador visual de atajos en POS.
+
+**RBAC implementado:**
+- ADMIN_NEGOCIO: 17 modulos (todo).
+- SUPERVISOR: 11 modulos (sin Compras, Usuarios, Planes, Configuracion, Sucursales).
+- CAJERO: 3 modulos (POS, Caja, Notificaciones).
+- DOMICILIARIO: 2 modulos (Pedidos, Notificaciones).
+
+**Iconos:**
+- Integrados 28 SVG iconos premium personalizados en `public/icons/`.
+- Componente `AppIcon` con mapeo automatico nombre→archivo.
+- Favicon PNG personalizado.
+
+**Diseno responsivo:**
+- Todas las vistas con `grid-cols-1` base + breakpoints.
+- Sidebar colapsable en mobile con Sheet.
+- Tablas con `overflow-x-auto` para scroll horizontal.
+- Marketplace con `max-w-7xl` y grid adaptable (1→5 columnas).
+- Vista de productos dedicada en `/marketplace`.
+
+**GSAP:**
+- Animaciones en todas las vistas con `<FadeIn>` y `<StaggerList>`.
+- Transiciones de pagina con `template.tsx`.
+
+**Stack final:**
+- Backend: NestJS + Prisma + PostgreSQL (24 modulos, 150+ endpoints).
+- Frontend: Next.js 16 + shadcn/ui + Tailwind v4 (24 vistas, 19 paginas admin).
+- Iconos: 28 SVG premium personalizados.
+- Animaciones: GSAP + ScrollTrigger.
+- Mapas: Leaflet para rutas de entrega.
+
+### Validacion
+- `npm run build --workspace backend`: OK.
+- `npm run build --workspace frontend`: OK, 24 rutas generadas.
+- `http://localhost:3000`: todas las paginas HTTP 200.
+- Login con 4 roles funcionales.
+
+### Pendiente
+- Integracion con pasarela de pagos Stripe/PayU.
+- Facturador electronico DIAN.
+- Modo offline con Service Worker.
+- E2E tests con Playwright.
+- Deployment a produccion con Docker Compose.
+
+---
+
+## 2026-06-11 - UI admin y modo oscuro consistente
+
+### Contexto
+
+Se reviso el cerebro/Obsidian y se continuo sobre el MVP multi-tenant. El foco de esta tanda fue mejorar el modo oscuro y alinear las vistas admin solicitadas: promociones, inventario, clientes y compras/proveedores.
+
+### Cambios
+
+- Modo oscuro corregido en admin:
+  - `BrandingProvider` ya no pisa el tema del usuario dentro de `/admin`.
+  - `ThemeProvider` sincroniza explicitamente las clases `dark`/`light` en `<html>`.
+  - Se elimino el toggle flotante dentro del admin para dejar un unico control en el header.
+  - Se corrigieron colores de texto, iconos, botones, inputs, tablas y cards con tokens semanticos.
+- Redisenadas las vistas:
+  - `/admin/promotions`: metricas superiores, tabs, buscador, filtros, tabla y estado vacio tipo referencia.
+  - `/admin/inventory`: metricas, toolbar, filtros, tabla y estado vacio mejorado.
+  - `/admin/customers`: metricas, filtros de segmento, buscador, avatares iniciales y tabla/estado vacio.
+  - `/admin/purchases`: metricas, acciones principales, tabs compras/proveedores, filtros y estados vacios.
+- Componentes compartidos ajustados:
+  - `PageHeader`, `AdminPageLayout`, `Breadcrumbs`, `StatCard`, `DataTable`, `EmptyState`, `Card`, `Input`, `Table`, `Button`, `Tabs`.
+
+### Validacion
+
+- `npm run typecheck --workspace frontend`: OK.
+- `npm run build --workspace frontend`: OK.
+- `localhost:3000/admin/promotions`: HTTP 200 tras reiniciar `next start -p 3000`.
+- Verificacion en navegador integrado:
+  - `html.dark` se mantiene al navegar entre `/admin/promotions`, `/admin/inventory`, `/admin/customers` y `/admin/purchases`.
+  - Cards, tablas, titulos, inputs y botones reportan fondo oscuro/texto claro en modo dark.
+  - El toggle flotante ya no aparece en admin.
+
+### Pendiente
+
+- El comando de screenshot del navegador integrado expiro al capturar, pero la validacion DOM/computed paso.
+- Queda deuda global previa de estilos hardcodeados en otras vistas admin no incluidas en esta tanda, especialmente dashboard/superadmin.

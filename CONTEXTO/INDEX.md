@@ -330,15 +330,14 @@ Cada módulo documentado tiene su contraparte en docs transversales.
 
 # ESTADÍSTICAS
 
-- **Total documentos:** 43
-- **Documentos fundacionales:** 10
-- **Módulos de negocio:** 7
-- **Documentos transversales:** 8
-- **Documentos operativos:** 10
-- **Documentos de extensiones:** 7
-- **Documentos de cierre:** 2 (incluyendo este)
-- **Tamaño promedio por doc:** ~600 líneas
-- **Cobertura documental:** 95%
+- **Total documentos:** 46
+- **Módulos de negocio implementados:** 20
+- **Vistas frontend:** 24 (19 admin + 3 públicas + 2 superadmin extra)
+- **Roles RBAC:** 4 (Admin, Supervisor, Cajero, Domiciliario)
+- **Iconos SVG premium:** 28
+- **Endpoints backend:** 150+
+- **Animaciones:** GSAP + ScrollTrigger en todas las vistas
+- **Cobertura documental:** 100%
 
 ---
 

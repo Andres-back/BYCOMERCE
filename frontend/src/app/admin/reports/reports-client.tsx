@@ -31,6 +31,7 @@ import {
 } from 'recharts';
 import { toast } from 'sonner';
 import { useDashboardReport, useSalesReport, useProductsReport, useInventoryReport, useCustomersReport } from '@/hooks/use-reports';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { PageHeader } from '@/components/layouts/page-header';
 import { StatCard } from '@/components/shared/stat-card';
 import { DataTable } from '@/components/shared/data-table';
@@ -215,6 +216,7 @@ export default function ReportsClient() {
 
   return (
     <FadeIn as="main" className="space-y-6">
+      <Breadcrumbs />
       <PageHeader title="Reportes" description="Indicadores detallados del negocio">
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">

@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/providers/theme-provider';
 import { QueryProvider } from '@/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <TooltipProvider>
               {children}
               <Toaster richColors closeButton />
+              <ThemeToggle />
             </TooltipProvider>
           </QueryProvider>
         </ThemeProvider>

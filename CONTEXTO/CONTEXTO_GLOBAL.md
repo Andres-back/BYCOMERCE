@@ -109,52 +109,60 @@ Regla: No sustituir ninguna tecnología de esta tabla sin aprobación explícita
 
 # MAPA DE MÓDULOS DEL SISTEMA
 
-## Módulos de negocio (ya documentados)
+## Módulos de negocio
 
-| Módulo | Backend | Frontend | Documento |
-|--------|---------|----------|-----------|
-| Inventario | modules/inventory | modules/inventory | [[Inventario.md]] |
-| POS | modules/pos | modules/pos | [[POS.md]] |
-| Catálogo Digital | modules/orders + modules/marketplace | modules/catalog | [[CATALOGO_DIGITAL.md]] |
-| Marketplace | modules/marketplace | app/marketplace | [[MARKETPLACE.md]] |
-| CRM | modules/customers | modules/crm | [[CRM_CLIENTE.md]] |
-| Domicilios | modules/delivery | modules/delivery | [[DOMICILIOS.md]] |
-| Reportes | modules/reports | modules/reports | [[REPORTES.md]] |
+| Módulo | Backend | Frontend | Estado | Documento |
+|--------|---------|----------|--------|-----------|
+| Dashboard | modules/reports | admin/dashboard | ✅ Implementado | [[REPORTES.md]] |
+| Inventario | modules/inventory | admin/inventory | ✅ Implementado | [[Inventario.md]] |
+| POS | modules/pos | admin/pos | ✅ Implementado | [[POS.md]] |
+| Catálogo Digital | modules/orders + marketplace | negocio/[slug] | ✅ Implementado | [[CATALOGO_DIGITAL.md]] |
+| Marketplace | modules/marketplace | app/marketplace | ✅ Implementado | [[MARKETPLACE.md]] |
+| CRM | modules/customers | admin/customers | ✅ Implementado | [[CRM_CLIENTE.md]] |
+| Pedidos/Domicilios | modules/orders | admin/orders | ✅ Implementado | [[DOMICILIOS.md]] |
+| Reportes | modules/reports | admin/reports | ✅ Implementado | [[REPORTES.md]] |
+| Promociones | modules/promotions | admin/promotions | ✅ Implementado | [[PROMOCIONES.md]] |
+| Fidelización | modules/loyalty | admin/loyalty | ✅ Implementado | [[FIDELIZACION.md]] |
+| Sucursales | modules/branches | admin/branches | ✅ Implementado | [[SUCURSALES.md]] |
+| Ruta de entrega | modules/orders | admin/delivery/route | ✅ Implementado | [[DOMICILIOS.md]] |
+| Caja/Gastos | modules/finance | admin/cash | ✅ Implementado | [[POS.md]] |
+| Compras/Proveedores | modules/inventory | admin/purchases | ✅ Implementado | [[Inventario.md]] |
+| Configuración | modules/tenants | admin/settings | ✅ Implementado | — |
+| Usuarios | modules/users | admin/users | ✅ Implementado | [[AUTH.md]] |
+| Planes/Suscripción | modules/plans | admin/plans | ✅ Implementado | [[SUSCRIPCIONES.md]] |
+| Notificaciones | modules/notifications | admin/notifications | ✅ Implementado | [[NOTIFICACIONES.md]] |
+| Domiciliarios | — | admin/delivery | ✅ Implementado | [[DOMICILIOS.md]] |
+| Super Admin | modules/superadmin | admin/superadmin/* | ✅ Implementado | — |
 
-## Módulos transversales (a documentar)
+## Módulos transversales
 
-| Módulo | Documento |
-|--------|-----------|
-| Autenticación | [[AUTH.md]] |
-| Autorización (RBAC) | [[RBAC.md]] |
-| Multi-tenant | [[MULTI_TENANT.md]] |
-| Auditoría | [[AUDITORIA.md]] |
-| API REST | [[API.md]] |
-| Eventos | [[EVENTOS.md]] |
-| WebSockets | [[WEBSOCKETS.md]] |
-| Cache | [[CACHE.md]] |
-| Pagos | [[PAGOS.md]] |
-| Suscripciones | [[SUSCRIPCIONES.md]] |
-| Promociones | [[PROMOCIONES.md]] |
-| Notificaciones | [[NOTIFICACIONES.md]] |
-| WhatsApp | [[WHATSAPP.md]] |
-| Fidelización | [[FIDELIZACION.md]] |
-| Sucursales | [[SUCURSALES.md]] |
-| Geolocalización | [[GEOLOCALIZACION.md]] |
-| Integraciones externas | [[INTEGRACIONES.md]] |
+| Módulo | Estado | Documento |
+|--------|--------|-----------|
+| Autenticación (JWT) | ✅ Implementado | [[AUTH.md]] |
+| Autorización (RBAC) | ✅ Implementado (4 roles) | [[RBAC.md]] |
+| Multi-tenant | ✅ Implementado | [[MULTI_TENANT.md]] |
+| Auditoría | ✅ Implementado | [[AUDITORIA.md]] |
+| API REST | ✅ Implementado (150+ endpoints) | [[API.md]] |
+| Eventos | ✅ Implementado | [[EVENTOS.md]] |
+| WebSockets | ✅ Implementado | [[WEBSOCKETS.md]] |
+| Cache | ✅ Implementado (Redis) | [[CACHE.md]] |
+| Pagos | ✅ Implementado | [[PAGOS.md]] |
+| WhatsApp | ✅ Implementado (wa.me) | [[WHATSAPP.md]] |
+| Geolocalización | ✅ Implementado (Leaflet) | [[GEOLOCALIZACION.md]] |
 
-## Módulos operativos (a documentar)
+## Frontend
 
-| Módulo | Documento |
-|--------|-----------|
-| Despliegue | [[DEPLOYMENT.md]] |
-| CI/CD | [[CI_CD.md]] |
-| Backups | [[BACKUPS.md]] |
-| Seguridad | [[SEGURIDAD.md]] |
-| Monitoreo | [[MONITOREO.md]] |
-| Logging | [[LOGGING.md]] |
-| Testing | [[TESTING.md]] |
-| Soporte | [[SOPORTE.md]] |
+| Componente | Stack | Estado |
+|------------|-------|--------|
+| UI | shadcn/ui + Tailwind v4 + 28 SVG iconos premium | ✅ |
+| Animaciones | GSAP + ScrollTrigger | ✅ |
+| Formularios | React Hook Form + Zod v4 | ✅ |
+| Tablas | @tanstack/react-table | ✅ |
+| Gráficas | Recharts | ✅ |
+| Mapas | Leaflet + react-leaflet | ✅ |
+| Estado | TanStack Query + Zustand | ✅ |
+| Transiciones | GSAP timeline | ✅ |
+| Responsive | Mobile-first, sidebar Sheet, overflow-x-auto | ✅ |
 
 ---
 

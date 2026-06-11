@@ -16,7 +16,7 @@ export default async function HomePage() {
   return (
     <>
       {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
             <Image
@@ -31,15 +31,15 @@ export default async function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
-            <Link href="/" className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-teal-700">
+            <Link href="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
               <ShoppingBag className="size-4" />
               Comercios
             </Link>
-            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-teal-700">
+            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
               <ShoppingBag className="size-4" />
               Productos
             </Link>
-            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-teal-700">
+            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
               <Truck className="size-4" />
               Domicilios
             </Link>
@@ -53,8 +53,8 @@ export default async function HomePage() {
               <Shield className="size-4" />
               Iniciar sesión
             </Link>
-            <button className="flex size-9 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
-              <User className="size-5 text-gray-600" />
+            <button className="flex size-9 items-center justify-center rounded-full bg-muted hover:bg-muted/80">
+              <User className="size-5 text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default async function HomePage() {
       <MarketplaceClient businesses={businesses} featuredProducts={featuredProducts} />
 
       {/* Footer */}
-      <footer className="border-t bg-gray-50 py-12">
+      <footer className="border-t border-border bg-muted/50 py-12">
         <div className="mx-auto max-w-7xl px-4">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             <div>
@@ -71,13 +71,13 @@ export default async function HomePage() {
                 <Image src="/icons/icono.png" alt="Mocoa Market" width={32} height={32} className="rounded-lg" unoptimized />
                 <span className="text-xl font-bold text-teal-800">Mocoa Market</span>
               </div>
-              <p className="mt-4 text-sm text-gray-600">
+              <p className="mt-4 text-sm text-muted-foreground">
                 Plataforma multi-tenant para comercios locales en Mocoa, Putumayo.
               </p>
             </div>
             <div>
               <h4 className="text-sm font-semibold">Enlaces</h4>
-              <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/" className="hover:text-teal-700">Inicio</Link></li>
                 <li><Link href="/marketplace" className="hover:text-teal-700">Marketplace</Link></li>
                 <li><Link href="/auth/login" className="hover:text-teal-700">Admin</Link></li>
@@ -85,13 +85,13 @@ export default async function HomePage() {
             </div>
             <div>
               <h4 className="text-sm font-semibold">Legal</h4>
-              <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <li><span className="cursor-default hover:text-teal-700">Términos de servicio</span></li>
                 <li><span className="cursor-default hover:text-teal-700">Política de privacidad</span></li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 border-t pt-6 text-center text-sm text-gray-500">
+          <div className="mt-8 border-t border-border pt-6 text-center text-sm text-muted-foreground">
             &copy; 2024 Mocoa Market. Todos los derechos reservados.
           </div>
         </div>

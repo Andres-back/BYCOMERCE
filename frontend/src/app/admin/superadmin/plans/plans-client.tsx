@@ -137,7 +137,7 @@ export default function PlansClient() {
 
   function openEdit(plan: PlanItem) {
     setEditingPlan(plan);
-    const feats = plan.caracteristicas.length > 0 ? plan.caracteristicas : [''];
+    const feats = plan.caracteristicas && plan.caracteristicas.length > 0 ? plan.caracteristicas : [''];
     setCaracteristicas(feats);
     form.reset({
       nombre: plan.nombre,
@@ -186,9 +186,9 @@ export default function PlansClient() {
       accessorKey: 'caracteristicas', header: 'Características',
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
-          {row.original.caracteristicas.map((c, i) => (
+          {Array.isArray(row.original.caracteristicas) ? row.original.caracteristicas.map((c, i) => (
             <Badge key={i} variant="outline" className="text-xs">{c}</Badge>
-          ))}
+          )) : null}
         </div>
       ),
     },

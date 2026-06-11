@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,6 +42,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { StatCard } from '@/components/shared/stat-card';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
 
@@ -116,6 +117,28 @@ function receiptWhatsAppText(sale: Sale, businessName: string): string {
   return lines.join('\n');
 }
 
+function useKeyboardShortcuts(handlers: Record<string, () => void>) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+
+      const key = e.key.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      if (ctrl && key === 'f') { e.preventDefault(); handlers.search?.(); }
+      else if (ctrl && key === 'n') { e.preventDefault(); handlers.newSale?.(); }
+      else if (ctrl && key === 'enter') { e.preventDefault(); handlers.charge?.(); }
+      else if (key === 'escape') { handlers.cancel?.(); }
+      else if (key === 'f2') { e.preventDefault(); handlers.charge?.(); }
+      else if (key === 'f3') { e.preventDefault(); handlers.search?.(); }
+      else if (key === 'f4') { e.preventDefault(); handlers.payment?.(); }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handlers]);
+}
+
 export default function PosClient() {
   const { canVoidSales, token } = useAuth();
 
@@ -139,6 +162,8 @@ export default function PosClient() {
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -370,6 +395,14 @@ export default function PosClient() {
 
   const paymentMethods: PaymentMethod[] = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'MIXTO'];
 
+  useKeyboardShortcuts({
+    search: () => { searchInputRef.current?.focus(); },
+    newSale: () => { handleNewSale(); },
+    charge: () => { formRef.current?.requestSubmit(); },
+    cancel: () => { clearCart(); setVoidDialogOpen(false); setRefundDialogOpen(false); setReceiptDialogOpen(false); },
+    payment: () => { setPaymentMethod((prev) => { const idx = paymentMethods.indexOf(prev); return paymentMethods[(idx + 1) % paymentMethods.length]; }); },
+  });
+
   const saleStatusBadge = (estado?: string) => {
     switch (estado) {
       case 'ANULADA': return <Badge variant="destructive">Anulada</Badge>;
@@ -381,10 +414,18 @@ export default function PosClient() {
 
   return (
     <FadeIn as="main" className="space-y-4">
+      <Breadcrumbs />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Punto de Venta</h1>
           <p className="text-sm text-muted-foreground">Registro rapido de ventas y cobros</p>
+        </div>
+        <div className="hidden md:flex items-center gap-3 text-xs text-gray-400">
+          <span><kbd className="rounded border bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium">Ctrl+F</kbd> Buscar</span>
+          <span><kbd className="rounded border bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium">F2</kbd> Cobrar</span>
+          <span><kbd className="rounded border bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium">F4</kbd> Pago</span>
+          <span><kbd className="rounded border bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium">Esc</kbd> Cancelar</span>
+          <span><kbd className="rounded border bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium">Ctrl+N</kbd> Nueva venta</span>
         </div>
         <Button
           variant="outline"
@@ -443,6 +484,7 @@ export default function PosClient() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  ref={searchInputRef}
                   className="pl-9"
                   placeholder="Buscar por nombre, SKU o codigo de barras..."
                   value={searchInput}
@@ -538,7 +580,7 @@ export default function PosClient() {
         </div>
 
         <div className="lg:col-span-1">
-          <form onSubmit={handleCreateSale} className="lg:sticky lg:top-20">
+          <form ref={formRef} onSubmit={handleCreateSale} className="lg:sticky lg:top-20">
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

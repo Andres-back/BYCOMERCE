@@ -12,12 +12,12 @@ interface StatCardProps {
 }
 
 const iconBg: Record<string, string> = {
-  teal: 'bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/20',
-  blue: 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/20',
-  orange: 'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20',
-  red: 'bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20',
-  purple: 'bg-gradient-to-br from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-500/20',
-  pink: 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/20',
+  teal: 'bg-teal-500/12 text-teal-700 ring-1 ring-teal-500/15 dark:text-teal-300',
+  blue: 'bg-sky-500/12 text-sky-700 ring-1 ring-sky-500/15 dark:text-sky-300',
+  orange: 'bg-amber-500/14 text-amber-700 ring-1 ring-amber-500/15 dark:text-amber-300',
+  red: 'bg-rose-500/12 text-rose-700 ring-1 ring-rose-500/15 dark:text-rose-300',
+  purple: 'bg-violet-500/12 text-violet-700 ring-1 ring-violet-500/15 dark:text-violet-300',
+  pink: 'bg-pink-500/12 text-pink-700 ring-1 ring-pink-500/15 dark:text-pink-300',
 };
 
 function getIconStyle(index: number): string {
@@ -28,25 +28,25 @@ function getIconStyle(index: number): string {
 export function StatCard({ title, value, icon: Icon, trend, trendValue, description, className }: StatCardProps) {
   return (
     <div className={cn(
-      'group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5',
+      'admin-card-soft group relative overflow-hidden rounded-xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25',
       className,
     )}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-3xl font-bold tracking-tight text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
           {(trend || trendValue) && (
             <div className="flex items-center gap-1.5">
               {trend === 'up' && <TrendingUp className="size-3.5 text-green-500" />}
               {trend === 'down' && <TrendingDown className="size-3.5 text-red-500" />}
-              {trend === 'neutral' && <Minus className="size-3.5 text-gray-400" />}
-              {trendValue && <span className={cn('text-xs font-medium', trend === 'up' ? 'text-green-600' : trend === 'down' ? 'text-red-600' : 'text-gray-500')}>{trendValue}</span>}
+              {trend === 'neutral' && <Minus className="size-3.5 text-muted-foreground" />}
+              {trendValue && <span className={cn('text-xs font-medium', trend === 'up' ? 'text-green-600 dark:text-green-400' : trend === 'down' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>{trendValue}</span>}
             </div>
           )}
-          {description && <p className="text-xs text-gray-400">{description}</p>}
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
         {Icon && (
-          <div className={cn('flex size-11 items-center justify-center rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110', getIconStyle(title.length))}>
+          <div className={cn('flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105', getIconStyle(title.length))}>
             <Icon className="size-5" />
           </div>
         )}

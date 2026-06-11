@@ -9,11 +9,12 @@ import type { ColumnDef } from '@tanstack/react-table';
 import Link from 'next/link';
 import {
   Building2, Search, UserPlus, RefreshCw, Eye, Ban, CheckCircle,
-  ShieldOff, ShieldCheck,
+  ShieldOff, ShieldCheck, Store, ShoppingBag, UtensilsCrossed, Pill, Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { superadminService } from '@/services/superadmin/superadmin.service';
+import { TIPO_NEGOCIO_PRESETS, getBusinessTypes } from '@/services/business-types/business-types.service';
 import { formatDate, formatNumber, formatCopCentavos } from '@/lib/format';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
 import { PageHeader } from '@/components/layouts/page-header';
@@ -50,7 +51,7 @@ const ESTADO_LABEL: Record<string, string> = {
   CANCELADO: 'Cancelado',
 };
 
-const TIPO_NEGOCIO = ['SUPERMERCADO', 'TIENDA', 'FARMACIA', 'OTRO'] as const;
+const TIPO_NEGOCIO = TIPO_NEGOCIO_PRESETS.map((t) => t.id);
 
 const createSchema = z.object({
   nombre: z.string().min(1, 'Requerido').max(160),
@@ -124,7 +125,7 @@ export default function TenantsClient() {
   const createForm = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
     defaultValues: {
-      nombre: '', slug: '', tipoNegocio: 'TIENDA', planId: '',
+      nombre: '', slug: '', tipoNegocio: 'tienda', planId: '',
       adminNombre: '', adminEmail: '', adminPassword: '',
       telefono: '', direccion: '', barrio: '', ciudad: '',
       diasPrueba: 14,
@@ -226,7 +227,7 @@ export default function TenantsClient() {
   return (
     <FadeIn as="main" className="space-y-6">
       <PageHeader title="Tenants" description="Gestion de negocios registrados en la plataforma">
-        <Button onClick={() => { createForm.reset({ nombre: '', slug: '', tipoNegocio: 'TIENDA', planId: '', adminNombre: '', adminEmail: '', adminPassword: '', telefono: '', direccion: '', barrio: '', ciudad: '', diasPrueba: 14 }); setCreateOpen(true); }}>
+        <Button onClick={() => { createForm.reset({ nombre: '', slug: '', tipoNegocio: 'tienda', planId: '', adminNombre: '', adminEmail: '', adminPassword: '', telefono: '', direccion: '', barrio: '', ciudad: '', diasPrueba: 14 }); setCreateOpen(true); }}>
           <Building2 className="size-4 mr-1" /> Crear Tenant
         </Button>
       </PageHeader>
@@ -339,17 +340,33 @@ export default function TenantsClient() {
               <Input id="c-slug" {...createForm.register('slug')} />
               {createForm.formState.errors.slug && <p className="text-xs text-destructive">{createForm.formState.errors.slug.message}</p>}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="c-tipo">Tipo de negocio</Label>
-                <Select value={createForm.watch('tipoNegocio')} onValueChange={(v) => { if (v !== null) createForm.setValue('tipoNegocio', v as CreateForm['tipoNegocio'], { shouldValidate: true }); }}>
-                  <SelectTrigger id="c-tipo"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {TIPO_NEGOCIO.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {createForm.formState.errors.tipoNegocio && <p className="text-xs text-destructive">{createForm.formState.errors.tipoNegocio.message}</p>}
+            <div className="space-y-2">
+              <Label>Tipo de negocio</Label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {TIPO_NEGOCIO_PRESETS.map((preset) => {
+                  const Icon = preset.id === 'tienda' ? Store : preset.id === 'zapateria' ? ShoppingBag : preset.id === 'restaurante' ? UtensilsCrossed : preset.id === 'ferreteria' ? Wrench : Building2;
+                  const selected = createForm.watch('tipoNegocio') === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => createForm.setValue('tipoNegocio', preset.id as CreateForm['tipoNegocio'], { shouldValidate: true })}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-center transition-all ${
+                        selected ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`flex size-10 items-center justify-center rounded-full ${selected ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                        <Icon className="size-5" />
+                      </div>
+                      <span className={`text-xs font-medium ${selected ? 'text-teal-800' : 'text-gray-700'}`}>{preset.label}</span>
+                      <span className="text-[10px] text-gray-400">{preset.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
+              {createForm.formState.errors.tipoNegocio && <p className="text-xs text-destructive">{createForm.formState.errors.tipoNegocio.message}</p>}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="c-plan">Plan</Label>
                 <Select value={createForm.watch('planId')} onValueChange={(v) => { if (v !== null) createForm.setValue('planId', v, { shouldValidate: true }); }}>

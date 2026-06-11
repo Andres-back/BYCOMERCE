@@ -35,8 +35,10 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { PageHeader } from '@/components/layouts/page-header';
 import { DataTable } from '@/components/shared/data-table';
+import { EmptyState } from '@/components/shared/empty-state';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { StatCard } from '@/components/shared/stat-card';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
@@ -78,8 +80,6 @@ const customerSchema = z.object({
 });
 type CustomerFormValues = z.infer<typeof customerSchema>;
 
-const PAGE_SIZE = 20;
-
 const TAG_COLORS = [
   'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
   'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -115,6 +115,16 @@ function getTagColor(tag: string) {
     hash = tag.charCodeAt(i) + ((hash << 5) - hash);
   }
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 export default function CustomersClient() {
@@ -164,9 +174,11 @@ export default function CustomersClient() {
 
   useEffect(() => {
     if (detail) {
-      setTags(parseTags(detail.observaciones));
-      setNotes(removeTags(detail.observaciones));
-      setTagInput('');
+      window.setTimeout(() => {
+        setTags(parseTags(detail.observaciones));
+        setNotes(removeTags(detail.observaciones));
+        setTagInput('');
+      }, 0);
     }
   }, [detail]);
 
@@ -264,10 +276,13 @@ export default function CustomersClient() {
         cell: ({ row }) => (
           <button
             type="button"
-            className="font-medium text-left hover:underline"
+            className="flex items-center gap-3 text-left"
             onClick={() => setDetailId(row.original.id)}
           >
-            {row.original.nombre}
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary ring-1 ring-primary/10">
+              {getInitials(row.original.nombre)}
+            </span>
+            <span className="font-semibold text-foreground hover:underline">{row.original.nombre}</span>
           </button>
         ),
       },
@@ -374,6 +389,7 @@ export default function CustomersClient() {
 
   return (
     <FadeIn as="main" className="space-y-6">
+      <Breadcrumbs />
       <PageHeader title="Clientes" description="Gestiona los clientes del negocio.">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => {
@@ -407,7 +423,7 @@ export default function CustomersClient() {
               </Button>
             ))}
           </div>
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Buscar nombre, telefono o email..."
@@ -425,8 +441,13 @@ export default function CustomersClient() {
             ))}
           </div>
         ) : customers.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center">
-            <p className="text-muted-foreground">No se encontraron clientes.</p>
+          <div className="admin-card rounded-xl">
+            <EmptyState
+              icon={<Users className="size-9" />}
+              title="No se encontraron clientes"
+              description="Crea un cliente o ajusta los filtros para ver resultados."
+              action={<Button onClick={() => handleFormOpen()}><Plus className="mr-1 size-4" />Nuevo cliente</Button>}
+            />
           </div>
         ) : (
           <DataTable columns={columns} data={customers} />
@@ -716,5 +737,3 @@ export default function CustomersClient() {
     </FadeIn>
   );
 }
-
-

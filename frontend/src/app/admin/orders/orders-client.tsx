@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { PageHeader } from '@/components/layouts/page-header';
 import { StatCard } from '@/components/shared/stat-card';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
@@ -292,6 +293,7 @@ export default function OrdersClient() {
 
   return (
     <FadeIn as="main" className="space-y-6">
+      <Breadcrumbs />
       <PageHeader title="Pedidos" description="Gestiona los pedidos del negocio y actualiza su estado.">
         {role === 'DOMICILIARIO' && (
           <Button variant="default" onClick={() => router.push('/admin/delivery/route')}>

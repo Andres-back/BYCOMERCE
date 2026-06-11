@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsInt, IsArray, IsEmail, Min, Max, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsInt, IsArray, IsEmail, Min, Max, MaxLength, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ImpersonateDto {
@@ -50,7 +50,7 @@ export class CreateTenantDto {
   adminEmail!: string;
 
   @IsString()
-  @Min(6)
+  @MinLength(6)
   adminPassword!: string;
 
   @IsOptional()
@@ -140,7 +140,7 @@ export class CreateUserForTenantDto {
   rol!: string;
 
   @IsOptional() @IsString()
-  @Min(6)
+  @MinLength(6)
   password?: string;
 }
 

@@ -17,8 +17,12 @@ import { toast } from 'sonner';
 import {
   Archive,
   ArrowUpDown,
+  Bell,
+  Boxes,
   Copy,
+  DollarSign,
   Download,
+  Layers,
   PackagePlus,
   Pencil,
   Plus,
@@ -61,7 +65,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
+import { EmptyState } from '@/components/shared/empty-state';
 import { PageHeader } from '@/components/layouts/page-header';
+import { StatCard } from '@/components/shared/stat-card';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
 
 import { formatCopCentavos, availabilityLabel, availabilityVariant } from '@/lib/format';
@@ -530,6 +537,7 @@ export function InventoryClient() {
 
   return (
     <FadeIn as="main" className="space-y-6">
+      <Breadcrumbs />
       <PageHeader title="Inventario" description="Productos, categorias y movimientos de stock">
         {canManageProducts && (
           <Button onClick={openCreateProduct}>
@@ -548,37 +556,12 @@ export function InventoryClient() {
         )}
       </PageHeader>
 
-      <StaggerList><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Productos</p>
-            <p className="text-2xl font-bold">{products.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Unidades</p>
-            <p className="text-2xl font-bold">{stats.units}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Valor en costo</p>
-            <p className="text-2xl font-bold">{formatCopCentavos(stats.value)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Alertas</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold">{stats.low}</span>
-              <Badge variant="secondary">Bajo stock</Badge>
-              <span className="text-2xl font-bold">{stats.out}</span>
-              <Badge variant="destructive">Agotado</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div></StaggerList>
+      <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Productos" value={products.length} icon={Boxes} description="Productos registrados" />
+        <StatCard title="Unidades" value={stats.units} icon={Layers} description="Unidades totales" />
+        <StatCard title="Valor en costo" value={formatCopCentavos(stats.value)} icon={DollarSign} description="Valor total del inventario" />
+        <StatCard title="Alertas" value={stats.low + stats.out} icon={Bell} description={`${stats.low} bajo stock · ${stats.out} agotado`} />
+      </StaggerList>
 
       <Tabs defaultValue="products">
         <TabsList>
@@ -651,7 +634,7 @@ export function InventoryClient() {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-md border">
+            <div className="admin-card overflow-hidden rounded-xl">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -677,8 +660,18 @@ export function InventoryClient() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={columns.length} className="h-24 text-center">
-                        Sin resultados.
+                      <TableCell colSpan={columns.length} className="h-80 text-center">
+                        <EmptyState
+                          icon={<PackagePlus className="size-9" />}
+                          title="Aun no tienes productos"
+                          description="Comienza agregando tu primer producto para empezar a gestionar tu inventario."
+                          action={canManageProducts ? (
+                            <Button onClick={openCreateProduct}>
+                              <Plus className="mr-1 size-4" />
+                              Crear producto
+                            </Button>
+                          ) : undefined}
+                        />
                       </TableCell>
                     </TableRow>
                   )}

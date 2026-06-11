@@ -5,9 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Plus, RefreshCw, Trash2, Tag } from 'lucide-react';
+import { BarChart3, BookOpen, DollarSign, Pencil, Plus, RefreshCw, Search, SlidersHorizontal, Ticket, Trash2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTable } from '@/components/shared/data-table';
+import { EmptyState } from '@/components/shared/empty-state';
+import { StatCard } from '@/components/shared/stat-card';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
 import { PageHeader } from '@/components/layouts/page-header';
@@ -99,6 +101,8 @@ type CouponFormValues = z.infer<typeof couponSchema>;
 export default function PromotionsClient() {
   const { token } = useAuth();
   const [tab, setTab] = useState('promotions');
+  const [promoSearch, setPromoSearch] = useState('');
+  const [couponSearch, setCouponSearch] = useState('');
 
   const { data: promotions = [], isLoading: loadingPromotions, refetch: refetchPromotions } = usePromotions(token!);
   const { data: coupons = [], isLoading: loadingCoupons, refetch: refetchCoupons } = useCoupons(token!);
@@ -157,6 +161,41 @@ export default function PromotionsClient() {
       fechaExpiracion: editingCoupon.fechaExpiracion?.slice(0, 16) ?? '',
     } : undefined,
   });
+
+  const filteredPromotions = useMemo(() => {
+    const q = promoSearch.trim().toLowerCase();
+    if (!q) return promotions;
+    return promotions.filter((promo) =>
+      [promo.nombre, promo.descripcion, tipoLabels[promo.tipo], alcanceLabels[promo.alcance]]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(q)),
+    );
+  }, [promoSearch, promotions]);
+
+  const filteredCoupons = useMemo(() => {
+    const q = couponSearch.trim().toLowerCase();
+    if (!q) return coupons;
+    return coupons.filter((coupon) =>
+      [coupon.codigo, coupon.promotion?.nombre, coupon.tipo]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(q)),
+    );
+  }, [couponSearch, coupons]);
+
+  const stats = useMemo(() => {
+    const activePromotions = promotions.filter((promo) => promo.active).length;
+    const activeCoupons = coupons.filter((coupon) => coupon.active).length;
+    const redemptions =
+      promotions.reduce((sum, promo) => sum + promo.usosActuales, 0) +
+      coupons.reduce((sum, coupon) => sum + coupon.usosActuales, 0);
+
+    return [
+      { title: 'Promociones activas', value: activePromotions, icon: Tag, description: activePromotions ? 'Campanas disponibles' : 'No hay promociones activas' },
+      { title: 'Cupones activos', value: activeCoupons, icon: Ticket, description: activeCoupons ? 'Codigos disponibles' : 'No hay cupones activos' },
+      { title: 'Redenciones del mes', value: redemptions, icon: BarChart3, description: '0% vs mes anterior' },
+      { title: 'Ventas generadas', value: '$ 0', icon: DollarSign, description: '0% vs mes anterior' },
+    ];
+  }, [coupons, promotions]);
 
   function openPromoCreate() {
     setEditingPromo(null);
@@ -306,24 +345,55 @@ export default function PromotionsClient() {
   ], []);
 
   return (
-    <FadeIn as="main" className="space-y-4">
+    <FadeIn as="main" className="space-y-6">
       <PageHeader title="Promociones y Cupones" description="Administra promociones y cupones de descuento">
-        <Button variant="outline" size="icon" onClick={() => { refetchPromotions(); refetchCoupons(); }}>
-          <RefreshCw className="size-4" />
+        <Button onClick={openPromoCreate}>
+          <Plus className="mr-1 size-4" />
+          Crear promocion
         </Button>
       </PageHeader>
 
+      <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <StatCard key={stat.title} {...stat} />
+        ))}
+      </StaggerList>
+
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="promotions" className="gap-2">
-            <Tag className="size-4" />
-            Promociones
-          </TabsTrigger>
-          <TabsTrigger value="coupons">Cupones</TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <TabsList>
+            <TabsTrigger value="promotions" className="gap-2">
+              <Tag className="size-4" />
+              Promociones
+            </TabsTrigger>
+            <TabsTrigger value="coupons" className="gap-2">
+              <Ticket className="size-4" />
+              Cupones
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={tab === 'promotions' ? promoSearch : couponSearch}
+                onChange={(event) => (tab === 'promotions' ? setPromoSearch(event.target.value) : setCouponSearch(event.target.value))}
+                placeholder={tab === 'promotions' ? 'Buscar promociones...' : 'Buscar cupones...'}
+                className="pl-9"
+              />
+            </div>
+            <Button variant="outline">
+              <SlidersHorizontal className="mr-1 size-4" />
+              Filtros
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => { refetchPromotions(); refetchCoupons(); }} title="Actualizar">
+              <RefreshCw className="size-4" />
+            </Button>
+          </div>
+        </div>
 
         <TabsContent value="promotions" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="hidden">
             <Button onClick={openPromoCreate}>
               <Plus className="mr-1 size-4" />
               Crear promoción
@@ -334,7 +404,29 @@ export default function PromotionsClient() {
               {loadingPromotions ? (
                 <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Cargando...</div>
               ) : (
-                <DataTable columns={promoColumns} data={promotions} />
+                <DataTable
+                  columns={promoColumns}
+                  data={filteredPromotions}
+                  emptyState={(
+                    <EmptyState
+                      icon={<Tag className="size-9" />}
+                      title="Aun no tienes promociones"
+                      description="Crea tu primera promocion y comienza a impulsar tus ventas con descuentos y ofertas especiales."
+                      action={(
+                        <div className="flex flex-col items-center gap-3">
+                          <Button onClick={openPromoCreate}>
+                            <Plus className="mr-1 size-4" />
+                            Crear promocion
+                          </Button>
+                          <Button variant="link" className="gap-1">
+                            <BookOpen className="size-4" />
+                            Ver guia rapida
+                          </Button>
+                        </div>
+                      )}
+                    />
+                  )}
+                />
               )}
             </CardContent>
           </Card>
@@ -352,7 +444,18 @@ export default function PromotionsClient() {
               {loadingCoupons ? (
                 <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Cargando...</div>
               ) : (
-                <DataTable columns={couponColumns} data={coupons} />
+                <DataTable
+                  columns={couponColumns}
+                  data={filteredCoupons}
+                  emptyState={(
+                    <EmptyState
+                      icon={<Ticket className="size-9" />}
+                      title="Aun no tienes cupones"
+                      description="Crea codigos de descuento para campanas, clientes frecuentes o acciones comerciales puntuales."
+                      action={<Button onClick={openCouponCreate}><Plus className="mr-1 size-4" />Crear cupon</Button>}
+                    />
+                  )}
+                />
               )}
             </CardContent>
           </Card>

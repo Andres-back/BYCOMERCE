@@ -99,7 +99,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
     <div className="space-y-6">
       <Card className="border-0 shadow-sm">
         <CardContent className="p-5">
-          <h3 className="mb-4 font-bold text-gray-900">Explorar</h3>
+          <h3 className="mb-4 font-bold text-foreground">Explorar</h3>
           <nav className="space-y-1.5">
             {[
               { id: 'Todos', label: 'Todos los comercios', icon: Store },
@@ -111,18 +111,18 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 onClick={() => { setActiveCategory(item.id); setSidebarOpen(false); }}
                 className={cn(
                   'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                  activeCategory === item.id ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  activeCategory === item.id ? 'bg-teal-50 text-teal-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
-                <item.icon className={cn('size-4', activeCategory === item.id ? 'text-teal-600' : 'text-gray-400')} />
+                <item.icon className={cn('size-4', activeCategory === item.id ? 'text-teal-600' : 'text-muted-foreground')} />
                 {item.label}
               </button>
             ))}
           </nav>
 
-          <div className="my-5 border-t border-gray-100" />
+          <div className="my-5 border-t border-border" />
 
-          <h3 className="mb-4 font-bold text-gray-900">Categorías</h3>
+          <h3 className="mb-4 font-bold text-foreground">Categorías</h3>
           <nav className="space-y-1.5">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
@@ -133,11 +133,11 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                   onClick={() => { setActiveCategory(activeCategory === cat.id ? 'Todos' : cat.id); setSidebarOpen(false); }}
                   className={cn(
                     'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                    activeCategory === cat.id ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                    activeCategory === cat.id ? 'bg-teal-50 text-teal-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon className={cn('size-4', activeCategory === cat.id ? 'text-teal-600' : 'text-gray-400')} />
+                    <Icon className={cn('size-4', activeCategory === cat.id ? 'text-teal-600' : 'text-muted-foreground')} />
                     {cat.label}
                   </span>
                   {count > 0 && <Badge variant="secondary" className="ml-2 rounded-full text-xs px-2">{count}</Badge>}
@@ -146,7 +146,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
             })}
           </nav>
 
-          <Button variant="outline" className="mt-5 w-full border-gray-200 text-gray-600 hover:text-gray-900" onClick={clearFilters}>
+          <Button variant="outline" className="mt-5 w-full border-border text-muted-foreground hover:text-foreground" onClick={clearFilters}>
             <X className="mr-2 size-3.5" />
             Limpiar filtros
           </Button>
@@ -175,17 +175,17 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
           </div>
 
           {/* Search */}
-          <Card className="border-0 bg-white shadow-xl">
+          <Card className="border-0 bg-card shadow-xl">
             <CardContent className="p-3 md:p-4">
               <div className="flex flex-col gap-3 md:flex-row">
                 <div className="relative flex-1">
-                  <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
-                  <Input className="h-11 pl-10 border-gray-200" placeholder="Buscar comercio, producto o barrio..." value={query} onChange={(e) => setQuery(e.target.value)} />
+                  <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input className="h-11 pl-10 border-border" placeholder="Buscar comercio, producto o barrio..." value={query} onChange={(e) => setQuery(e.target.value)} />
                 </div>
                 <div className="flex gap-3">
                   <Select value={location} onValueChange={(v) => setLocation(v ?? 'Todas')}>
-                    <SelectTrigger className="h-11 w-full md:w-[160px] border-gray-200">
-                      <MapPin className="mr-2 size-4 text-gray-400" />
+                    <SelectTrigger className="h-11 w-full md:w-[160px] border-border">
+                      <MapPin className="mr-2 size-4 text-muted-foreground" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -193,8 +193,8 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                     </SelectContent>
                   </Select>
                   <Select value={category} onValueChange={(v) => setCategory(v ?? 'Todas')}>
-                    <SelectTrigger className="h-11 w-full md:w-[160px] border-gray-200">
-                      <Tag className="mr-2 size-4 text-gray-400" />
+                    <SelectTrigger className="h-11 w-full md:w-[160px] border-border">
+                      <Tag className="mr-2 size-4 text-muted-foreground" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -220,7 +220,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                   onClick={() => setActiveCategory(activeCategory === cat.id ? 'Todos' : cat.id)}
                   className={cn(
                     'inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all',
-                    activeCategory === cat.id ? 'bg-white text-teal-800 shadow-md' : 'bg-white/20 text-white hover:bg-white/30',
+                    activeCategory === cat.id ? 'bg-card text-teal-800 shadow-md' : 'bg-white/20 text-white hover:bg-white/30',
                   )}
                 >
                   <Icon className="size-4" />
@@ -243,7 +243,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
               <div className="min-w-0">
                 <p className="text-2xl font-bold md:text-3xl">{businesses.length}</p>
                 <p className="text-sm font-medium">Comercios activos</p>
-                <p className="text-xs text-gray-500 truncate">Negocios locales en Mocoa</p>
+                <p className="text-xs text-muted-foreground truncate">Negocios locales en Mocoa</p>
               </div>
             </CardContent>
           </Card>
@@ -255,7 +255,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
               <div className="min-w-0">
                 <p className="text-2xl font-bold md:text-3xl">{featuredProducts.length}</p>
                 <p className="text-sm font-medium">Productos destacados</p>
-                <p className="text-xs text-gray-500 truncate">Productos más populares</p>
+                <p className="text-xs text-muted-foreground truncate">Productos más populares</p>
               </div>
             </CardContent>
           </Card>
@@ -267,7 +267,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
               <div className="min-w-0">
                 <p className="text-2xl font-bold md:text-3xl">{businesses.filter((b) => b.deliveryConfig?.activo).length}</p>
                 <p className="text-sm font-medium">Con domicilio</p>
-                <p className="text-xs text-gray-500 truncate">Entregas a tu puerta</p>
+                <p className="text-xs text-muted-foreground truncate">Entregas a tu puerta</p>
               </div>
             </CardContent>
           </Card>
@@ -310,12 +310,12 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
 
               {filteredBusinesses.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-10 text-center">
-                  <p className="text-gray-500">No se encontraron comercios con esos filtros.</p>
+                  <p className="text-muted-foreground">No se encontraron comercios con esos filtros.</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" ref={businessRef}>
                   {filteredBusinesses.map((business) => (
-                    <Link key={business.id} href={`/negocio/${business.slug}`} className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                    <Link key={business.id} href={`/negocio/${business.slug}`} className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
                       <div className="relative h-40 w-full md:h-44">
                         {BUSINESS_IMAGES[business.nombre] ? (
                           <Image src={BUSINESS_IMAGES[business.nombre]} alt={business.nombre} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
@@ -325,7 +325,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                           </div>
                         )}
                         <button className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition-transform hover:scale-110">
-                          <Heart className="size-4 text-gray-600" />
+                          <Heart className="size-4 text-muted-foreground" />
                         </button>
                       </div>
                       <div className="space-y-2.5 p-4">
@@ -337,14 +337,14 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                             </Badge>
                           )}
                         </div>
-                        <h3 className="font-bold text-gray-900 group-hover:text-teal-700 transition-colors">{business.nombre}</h3>
+                        <h3 className="font-bold text-foreground group-hover:text-teal-700 transition-colors">{business.nombre}</h3>
                         {business.direccion && (
-                          <p className="flex items-center gap-1 text-sm text-gray-500 truncate">
+                          <p className="flex items-center gap-1 text-sm text-muted-foreground truncate">
                             <MapPin className="size-3.5 shrink-0" /> {business.direccion}
                           </p>
                         )}
                         <div className="flex items-center justify-between">
-                          <p className="flex items-center gap-1 text-sm text-gray-500">
+                          <p className="flex items-center gap-1 text-sm text-muted-foreground">
                             <ShoppingBag className="size-3.5" /> {business._count?.products ?? 0} productos
                           </p>
                           <span className="flex items-center gap-1 text-sm font-medium text-teal-700">
@@ -372,27 +372,27 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
 
               {filteredProducts.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-10 text-center">
-                  <p className="text-gray-500">No se encontraron productos destacados.</p>
+                  <p className="text-muted-foreground">No se encontraron productos destacados.</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" ref={productRef}>
                   {filteredProducts.map((product) => (
-                    <Link key={`${product.tenantId ?? product.tenant?.id}-${product.id}`} href={`/negocio/${product.tenant?.slug ?? ''}`} className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                    <Link key={`${product.tenantId ?? product.tenant?.id}-${product.id}`} href={`/negocio/${product.tenant?.slug ?? ''}`} className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
                       <div className="relative h-40 w-full md:h-44">
                         {PRODUCT_IMAGES[product.nombre] || product.imagenPrincipal ? (
                           <Image src={PRODUCT_IMAGES[product.nombre] || product.imagenPrincipal!} alt={product.nombre} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-100 to-teal-100 text-sm text-gray-500">
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-100 to-teal-100 text-sm text-muted-foreground">
                             Sin imagen
                           </div>
                         )}
                         <button className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition-transform hover:scale-110">
-                          <Heart className="size-4 text-gray-600" />
+                          <Heart className="size-4 text-muted-foreground" />
                         </button>
                       </div>
                       <div className="space-y-2 p-3 md:p-4">
                         <Badge variant="secondary" className="text-xs truncate max-w-full">{product.tenant?.nombre ?? 'Comercio'}</Badge>
-                        <h3 className="font-bold leading-tight text-gray-900 group-hover:text-teal-700 transition-colors text-sm md:text-base">{product.nombre}</h3>
+                        <h3 className="font-bold leading-tight text-foreground group-hover:text-teal-700 transition-colors text-sm md:text-base">{product.nombre}</h3>
                         <p className="text-base font-bold text-teal-700 md:text-lg">{formatCopCentavos(product.precio)}</p>
                       </div>
                     </Link>

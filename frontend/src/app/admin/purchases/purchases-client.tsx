@@ -6,11 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
-  Archive, PackagePlus, Pencil, Plus, RefreshCw, Search, Trash2,
+  Archive, Ban, DollarSign, PackagePlus, Pencil, Plus, RefreshCw, Search, ShoppingCart, Trash2, UsersRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +19,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { DataTable } from '@/components/shared/data-table';
+import { EmptyState } from '@/components/shared/empty-state';
+import { StatCard } from '@/components/shared/stat-card';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
 import { PageHeader } from '@/components/layouts/page-header';
@@ -218,13 +219,18 @@ export default function PurchasesClient() {
     <FadeIn as="main" className="space-y-6">
       <PageHeader title="Compras y proveedores" description="Entradas de inventario con proveedor, factura y costos.">
         <Button variant="outline" size="icon" onClick={() => window.location.reload()} title="Actualizar"><RefreshCw className="size-4" /></Button>
+        <Button onClick={() => setPurchaseDialogOpen(true)}><PackagePlus className="size-4 mr-1" /> Nueva compra</Button>
+        <Button variant="outline" onClick={() => { setEditingSupplier(null); supplierForm.reset({ nombre: '', telefono: '', email: '', direccion: '', observaciones: '' }); setSupplierDialogOpen(true); }}>
+          <Plus className="size-4 mr-1" /> Nuevo proveedor
+        </Button>
       </PageHeader>
 
-      <StaggerList><div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Compras activas</p><p className="text-2xl font-bold">{totals.active}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total compras</p><p className="text-2xl font-bold">{formatCopCentavos(totals.total)}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Anuladas</p><p className="text-2xl font-bold">{totals.cancelled}</p></CardContent></Card>
-      </div></StaggerList>
+      <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Compras activas" value={totals.active} icon={ShoppingCart} description="Entradas en progreso" />
+        <StatCard title="Total compras" value={formatCopCentavos(totals.total)} icon={DollarSign} description="Valor total" />
+        <StatCard title="Anuladas" value={totals.cancelled} icon={Ban} description="Compras anuladas" />
+        <StatCard title="Proveedores" value={suppliers.length} icon={UsersRound} description="Proveedores registrados" />
+      </StaggerList>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -239,7 +245,23 @@ export default function PurchasesClient() {
           {loadingPurchases ? (
             <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : (
-            <DataTable columns={purchaseColumns} data={purchases} />
+            <DataTable
+              columns={purchaseColumns}
+              data={purchases}
+              emptyState={(
+                <EmptyState
+                  icon={<PackagePlus className="size-9" />}
+                  title="Aun no tienes compras registradas"
+                  description="Comienza registrando tu primera compra para controlar entradas, costos y proveedores de forma eficiente."
+                  action={(
+                    <div className="flex flex-col items-center gap-3">
+                      <Button onClick={() => setPurchaseDialogOpen(true)}><PackagePlus className="size-4 mr-1" /> Registrar compra</Button>
+                      <Button variant="link" onClick={() => setTab('suppliers')}>Crear proveedor</Button>
+                    </div>
+                  )}
+                />
+              )}
+            />
           )}
         </TabsContent>
 
@@ -256,7 +278,18 @@ export default function PurchasesClient() {
           {loadingSuppliers ? (
             <div className="space-y-2"><Skeleton className="h-12 w-full" /></div>
           ) : (
-            <DataTable columns={supplierColumns} data={suppliers} />
+            <DataTable
+              columns={supplierColumns}
+              data={suppliers}
+              emptyState={(
+                <EmptyState
+                  icon={<UsersRound className="size-9" />}
+                  title="Aun no tienes proveedores"
+                  description="Registra proveedores para asociarlos a compras y controlar costos."
+                  action={<Button onClick={() => { setEditingSupplier(null); supplierForm.reset({ nombre: '', telefono: '', email: '', direccion: '', observaciones: '' }); setSupplierDialogOpen(true); }}><Plus className="size-4 mr-1" />Nuevo proveedor</Button>}
+                />
+              )}
+            />
           )}
         </TabsContent>
       </Tabs>

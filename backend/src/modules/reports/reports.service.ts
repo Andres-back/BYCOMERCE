@@ -22,6 +22,7 @@ export class ReportsService {
 
   async getDashboard(user: RequestUser, query: ReportQueryDto) {
     const tenantId = this.requireTenant(user);
+    if (!tenantId) return this.emptyDashboard();
     const range = this.resolveRange(query);
     const todayRange = this.resolveTodayRange();
 
@@ -127,8 +128,23 @@ export class ReportsService {
     };
   }
 
+  private emptyDashboard() {
+    return {
+      kpis: {
+        salesToday: 0, salesMonth: 0, salesRange: 0, previousSalesRange: 0,
+        salesGrowthPercent: 0, transactions: 0, averageTicket: 0,
+        estimatedCost: 0, expenses: 0, expensesToday: 0, estimatedProfit: 0,
+        activeOrders: 0, pendingOrders: 0, lowStock: 0, outOfStock: 0,
+        customersNew: 0, customersTotal: 0, cashBalance: 0,
+      },
+      topProducts: [],
+      recentOrders: [],
+    };
+  }
+
   async getSalesReport(user: RequestUser, query: ReportQueryDto) {
     const tenantId = this.requireTenant(user);
+    if (!tenantId) return { totalSales: 0, totalTransactions: 0, averageTicket: 0, salesByPaymentMethod: [], salesByDay: [] };
     const range = this.resolveRange(query);
     const [summary, paymentMethods, daily] = await Promise.all([
       this.aggregateSales(tenantId, range.from, range.to),
@@ -167,6 +183,7 @@ export class ReportsService {
 
   async getProductsReport(user: RequestUser, query: ReportQueryDto) {
     const tenantId = this.requireTenant(user);
+    if (!tenantId) return { range: {}, topProducts: [], withoutMovement: [] };
     const range = this.resolveRange(query);
     const [topProducts, slowProducts] = await Promise.all([
       this.getTopProducts(tenantId, range.from, range.to, 20),
@@ -198,6 +215,7 @@ export class ReportsService {
 
   async getInventoryReport(user: RequestUser) {
     const tenantId = this.requireTenant(user);
+    if (!tenantId) return { totalProducts: 0, totalUnits: 0, stockValue: 0, lowStock: [], outOfStock: [], recentMovements: [] };
     const [products, lowStock, outOfStock, movements] = await Promise.all([
       this.prisma.product.aggregate({
         where: { tenantId, estado: EstadoGeneral.ACTIVO },
@@ -244,6 +262,7 @@ export class ReportsService {
 
   async getCustomersReport(user: RequestUser, query: ReportQueryDto) {
     const tenantId = this.requireTenant(user);
+    if (!tenantId) return { range: {}, total: 0, newCustomers: 0, topCustomers: [], recentCustomers: [] };
     const range = this.resolveRange(query);
     const [total, newCustomers, topCustomers, recentCustomers] = await Promise.all([
       this.prisma.customer.count({ where: { tenantId } }),
@@ -508,9 +527,9 @@ export class ReportsService {
     return Math.round(((current - previous) / previous) * 10000) / 100;
   }
 
-  private requireTenant(user: RequestUser): string {
+  private requireTenant(user: RequestUser): string | null {
     if (!user.tenantId || user.rol === RoleName.SUPER_ADMIN) {
-      throw new NotFoundException('Tenant no disponible para esta operacion');
+      return null;
     }
     return user.tenantId;
   }

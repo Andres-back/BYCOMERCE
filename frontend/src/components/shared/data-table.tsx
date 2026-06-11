@@ -10,7 +10,7 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
 } from '@tanstack/react-table';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { EmptyState } from './empty-state';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -26,12 +27,13 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  emptyState?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  searchKey,
+  emptyState,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -51,7 +53,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-md border overflow-x-auto">
+    <div className="admin-card overflow-hidden rounded-xl">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -77,8 +79,13 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                Sin resultados.
+              <TableCell colSpan={columns.length} className="h-72 text-center">
+                {emptyState ?? (
+                  <EmptyState
+                    title="Sin resultados"
+                    description="Ajusta los filtros o crea un nuevo registro para empezar."
+                  />
+                )}
               </TableCell>
             </TableRow>
           )}
