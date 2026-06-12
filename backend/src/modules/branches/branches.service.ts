@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { EstadoGeneral } from '../../database/prisma-client';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { CreateBranchDto, UpdateBranchDto } from './dto/create-branch.dto';
 
 @Injectable()
 export class BranchesService {
@@ -23,7 +24,7 @@ export class BranchesService {
     return branch;
   }
 
-  async create(tenantId: string, data: any, usuarioId: string) {
+  async create(tenantId: string, data: CreateBranchDto, usuarioId: string) {
     if (data.esPrincipal) {
       await this.prisma.tenantBranch.updateMany({
         where: { tenantId, esPrincipal: true },
@@ -35,7 +36,7 @@ export class BranchesService {
     return branch;
   }
 
-  async update(tenantId: string, id: string, data: any, usuarioId: string) {
+  async update(tenantId: string, id: string, data: UpdateBranchDto, usuarioId: string) {
     const branch = await this.get(tenantId, id);
     if (data.esPrincipal && !branch.esPrincipal) {
       await this.prisma.tenantBranch.updateMany({

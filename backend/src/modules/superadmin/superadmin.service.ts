@@ -23,6 +23,7 @@ import {
   AuditLogQueryDto,
 } from './dto/superadmin.dto';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'node:crypto';
 
 @Injectable()
 export class SuperadminService {
@@ -155,6 +156,10 @@ export class SuperadminService {
       where: { id: tenantId },
       include: {
         plan: true,
+        users: {
+          select: { id: true, nombre: true, email: true, rol: true, estado: true },
+          orderBy: { createdAt: 'asc' },
+        },
         subscriptions: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -264,7 +269,7 @@ export class SuperadminService {
     });
     if (existing) throw new ConflictException('Email ya registrado en este tenant');
 
-    const password = dto.password ?? Math.random().toString(36).slice(-10) + 'A1!';
+    const password = dto.password ?? randomBytes(5).toString('hex');
     const passwordHash = await bcrypt.hash(password, 4);
 
     const user = await this.prisma.user.create({
@@ -273,7 +278,7 @@ export class SuperadminService {
         nombre: dto.nombre,
         email: dto.email.toLowerCase(),
         passwordHash,
-        rol: dto.rol as any,
+        rol: dto.rol,
         estado: EstadoGeneral.ACTIVO,
       },
     });
@@ -388,7 +393,7 @@ export class SuperadminService {
     const existing = await this.prisma.plan.findUnique({ where: { nombre: dto.nombre } });
     if (existing) throw new ConflictException('Plan con ese nombre ya existe');
 
-    return this.prisma.plan.create({
+    const plan = await this.prisma.plan.create({
       data: {
         nombre: dto.nombre,
         descripcion: dto.descripcion,
@@ -400,13 +405,24 @@ export class SuperadminService {
         estado: EstadoGeneral.ACTIVO,
       },
     });
+
+    await this.audit.log({
+      tenantId: null,
+      usuarioId: 'superadmin-sys',
+      accion: 'PLAN_CREADO',
+      entidad: 'plans',
+      entidadId: plan.id,
+      newValue: plan,
+    });
+
+    return plan;
   }
 
   async updatePlan(id: string, dto: UpdatePlanDto) {
     const plan = await this.prisma.plan.findFirst({ where: { id } });
     if (!plan) throw new NotFoundException('Plan no encontrado');
 
-    return this.prisma.plan.update({
+    const updated = await this.prisma.plan.update({
       where: { id },
       data: {
         ...(dto.nombre !== undefined ? { nombre: dto.nombre } : {}),
@@ -418,16 +434,38 @@ export class SuperadminService {
         ...(dto.caracteristicas !== undefined ? { caracteristicas: dto.caracteristicas } : {}),
       },
     });
+
+    await this.audit.log({
+      tenantId: null,
+      usuarioId: 'superadmin-sys',
+      accion: 'PLAN_ACTUALIZADO',
+      entidad: 'plans',
+      entidadId: updated.id,
+      newValue: updated,
+    });
+
+    return updated;
   }
 
   async deletePlan(id: string) {
     const plan = await this.prisma.plan.findFirst({ where: { id } });
     if (!plan) throw new NotFoundException('Plan no encontrado');
 
-    return this.prisma.plan.update({
+    const deleted = await this.prisma.plan.update({
       where: { id },
       data: { estado: EstadoGeneral.INACTIVO },
     });
+
+    await this.audit.log({
+      tenantId: null,
+      usuarioId: 'superadmin-sys',
+      accion: 'PLAN_ELIMINADO',
+      entidad: 'plans',
+      entidadId: deleted.id,
+      newValue: deleted,
+    });
+
+    return deleted;
   }
 
   async getAuditLogs(query: AuditLogQueryDto) {

@@ -139,8 +139,19 @@ export class OrdersService {
   }
 
   listOrders(user: RequestUser) {
+    const tenantId = this.requireTenant(user);
+    const where: any = { tenantId };
+
+    if (user.rol === RoleName.CAJERO) {
+      return [];
+    }
+
+    if (user.rol === RoleName.DOMICILIARIO) {
+      where.deliveryUserId = user.id;
+    }
+
     return this.prisma.order.findMany({
-      where: { tenantId: this.requireTenant(user) },
+      where,
       include: this.orderInclude(),
       orderBy: { fecha: 'desc' },
       take: 100,

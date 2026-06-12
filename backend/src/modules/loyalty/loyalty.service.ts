@@ -1,6 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import {
+  UpdateLoyaltyProgramDto,
+  CreateLoyaltyTierDto,
+  UpdateLoyaltyTierDto,
+  CreateLoyaltyRewardDto,
+  UpdateLoyaltyRewardDto,
+} from './dto/loyalty.dto';
 
 @Injectable()
 export class LoyaltyService {
@@ -16,7 +23,7 @@ export class LoyaltyService {
     });
   }
 
-  async updateProgram(tenantId: string, data: any, usuarioId: string) {
+  async updateProgram(tenantId: string, data: UpdateLoyaltyProgramDto, usuarioId: string) {
     const program = await this.prisma.loyaltyProgram.upsert({
       where: { tenantId },
       create: { tenantId, ...data },
@@ -33,7 +40,7 @@ export class LoyaltyService {
     });
   }
 
-  async createTier(tenantId: string, data: any, usuarioId: string) {
+  async createTier(tenantId: string, data: CreateLoyaltyTierDto, usuarioId: string) {
     const program = await this.prisma.loyaltyProgram.findFirst({ where: { tenantId } });
     if (!program) throw new NotFoundException('Configure el programa primero');
     const tier = await this.prisma.loyaltyTier.create({ data: { programId: program.id, ...data } });
@@ -41,7 +48,7 @@ export class LoyaltyService {
     return tier;
   }
 
-  async updateTier(tenantId: string, id: string, data: any, usuarioId: string) {
+  async updateTier(tenantId: string, id: string, data: UpdateLoyaltyTierDto, usuarioId: string) {
     const tier = await this.prisma.loyaltyTier.findFirst({ where: { id, program: { tenantId } } });
     if (!tier) throw new NotFoundException('Nivel no encontrado');
     const updated = await this.prisma.loyaltyTier.update({ where: { id }, data });
@@ -53,13 +60,13 @@ export class LoyaltyService {
     return this.prisma.loyaltyReward.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
   }
 
-  async createReward(tenantId: string, data: any, usuarioId: string) {
+  async createReward(tenantId: string, data: CreateLoyaltyRewardDto, usuarioId: string) {
     const reward = await this.prisma.loyaltyReward.create({ data: { tenantId, ...data } });
     await this.audit.log({ tenantId, usuarioId, accion: 'RECOMPENSA_CREADA', entidad: 'loyalty_rewards', entidadId: reward.id });
     return reward;
   }
 
-  async updateReward(tenantId: string, id: string, data: any, usuarioId: string) {
+  async updateReward(tenantId: string, id: string, data: UpdateLoyaltyRewardDto, usuarioId: string) {
     const reward = await this.prisma.loyaltyReward.findFirst({ where: { id, tenantId } });
     if (!reward) throw new NotFoundException('Recompensa no encontrada');
     const updated = await this.prisma.loyaltyReward.update({ where: { id }, data });

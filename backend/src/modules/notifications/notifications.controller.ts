@@ -36,21 +36,25 @@ export class NotificationsController {
   }
 
   @Get('notifications/unread-count')
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.DOMICILIARIO)
   getUnreadCount(@CurrentUser() user: RequestUser) {
     return this.notificationsService.getUnreadCount(user);
   }
 
   @Post('notifications/:id/read')
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.DOMICILIARIO)
   markAsRead(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     return this.notificationsService.markAsRead(id, user);
   }
 
   @Post('notifications/read-all')
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.DOMICILIARIO)
   markAllAsRead(@CurrentUser() user: RequestUser) {
     return this.notificationsService.markAllAsRead(user);
   }
 
   @Delete('notifications/:id')
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.DOMICILIARIO)
   delete(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     return this.notificationsService.delete(id, user);
   }

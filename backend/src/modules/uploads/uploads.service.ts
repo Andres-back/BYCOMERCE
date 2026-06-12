@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -45,10 +45,10 @@ export class UploadsService {
 
   validateFile(mimetype: string, size: number) {
     if (!ALLOWED_TYPES.includes(mimetype)) {
-      throw new Error(`Tipo de archivo no permitido: ${mimetype}. Permitidos: ${ALLOWED_TYPES.join(', ')}`);
+      throw new BadRequestException(`Tipo de archivo no permitido: ${mimetype}. Permitidos: ${ALLOWED_TYPES.join(', ')}`);
     }
     if (size > MAX_FILE_SIZE) {
-      throw new Error(`Archivo demasiado grande: ${size} bytes. Maximo: ${MAX_FILE_SIZE}`);
+      throw new BadRequestException(`Archivo demasiado grande: ${size} bytes. Maximo: ${MAX_FILE_SIZE}`);
     }
   }
 

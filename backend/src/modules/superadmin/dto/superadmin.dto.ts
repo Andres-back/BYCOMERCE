@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsBoolean, IsInt, IsArray, IsEmail, Min, Max, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsInt, IsArray, IsEmail, IsEnum, Min, Max, MaxLength, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
+import { RoleName } from '../../../database/prisma-client';
 
 export class ImpersonateDto {
   @IsString()
@@ -136,8 +137,8 @@ export class CreateUserForTenantDto {
   @IsEmail()
   email!: string;
 
-  @IsString()
-  rol!: string;
+  @IsEnum(RoleName)
+  rol!: RoleName;
 
   @IsOptional() @IsString()
   @MinLength(6)

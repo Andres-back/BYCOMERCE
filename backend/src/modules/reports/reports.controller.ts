@@ -14,13 +14,13 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('dashboard')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.SUPER_ADMIN)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.SUPER_ADMIN)
   dashboard(@CurrentUser() user: RequestUser, @Query() query: ReportQueryDto) {
     return this.reportsService.getDashboard(user, query);
   }
 
   @Get('sales')
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.SUPER_ADMIN)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.SUPER_ADMIN)
   sales(@CurrentUser() user: RequestUser, @Query() query: ReportQueryDto) {
     return this.reportsService.getSalesReport(user, query);
   }

@@ -117,16 +117,25 @@ export default function TenantDetailClient() {
   });
 
   const createUserMut = useMutation({
-    mutationFn: (data: UserForm) => superadminService.createUserForTenant(token!, id, {
-      ...data,
-      password: data.password || undefined,
-    }),
+    mutationFn: (data: UserForm) => {
+      return superadminService.createUserForTenant(token!, id, {
+        nombre: data.nombre,
+        email: data.email,
+        rol: data.rol,
+        password: data.password || undefined,
+      });
+    },
     onSuccess: (res) => {
-      toast.success('Usuario creado');
+      toast.success('Usuario creado con exito');
       setUserCredentials(res);
+      setCreateUserOpen(false);
+      userForm.reset();
       qc.invalidateQueries({ queryKey: ['superadmin', 'tenant', id] });
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al crear usuario'),
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Error al crear usuario';
+      toast.error(msg || 'Error al crear usuario');
+    },
   });
 
   const detail = detailQuery.data;
@@ -538,7 +547,7 @@ export default function TenantDetailClient() {
               <Label htmlFor="u-password">Contrasena (opcional)</Label>
               <Input id="u-password" type="password" {...userForm.register('password')} placeholder="Se generara automaticamente si se deja vacio" />
             </div>
-            <DialogFooter>
+            <DialogFooter showCloseButton>
               <Button type="submit" disabled={createUserMut.isPending}>
                 {createUserMut.isPending ? 'Creando...' : 'Crear Usuario'}
               </Button>

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '../../database/prisma-client';
 import { PrismaService } from '../../database/prisma.service';
 import { RequestUser } from '../../common/types/request-user';
@@ -62,7 +62,7 @@ export class NotificationsService {
     });
 
     if (notification.tenantId !== user.tenantId) {
-      throw new Error('Notificacion no pertenece a este tenant');
+      throw new ForbiddenException('Notificacion no pertenece a este tenant');
     }
 
     return this.prisma.notification.update({
@@ -106,7 +106,7 @@ export class NotificationsService {
     });
 
     if (notification.tenantId !== user.tenantId) {
-      throw new Error('Notificacion no pertenece a este tenant');
+      throw new ForbiddenException('Notificacion no pertenece a este tenant');
     }
 
     await this.prisma.notification.delete({ where: { id: notificationId } });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -15,14 +15,27 @@ import { OrdersService } from './orders.service';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  private rateLimits = new Map<string, { count: number; timestamp: number }>();
+
   @Post()
-  createPublic(@Body() dto: CreateOrderDto) {
+  createPublic(@Body() dto: CreateOrderDto, @Req() req: any) {
+    const ip = req.ip || 'unknown';
+    const now = Date.now();
+    const limit = this.rateLimits.get(ip);
+    if (limit && now - limit.timestamp < 60000 && limit.count >= 5) {
+      throw new HttpException('Demasiados pedidos. Intenta de nuevo en 1 minuto.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    if (!limit || now - limit.timestamp > 60000) {
+      this.rateLimits.set(ip, { count: 1, timestamp: now });
+    } else {
+      limit.count++;
+    }
     return this.ordersService.createPublicOrder(dto);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO, RoleName.DOMICILIARIO)
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.DOMICILIARIO)
   list(@CurrentUser() user: RequestUser) {
     return this.ordersService.listOrders(user);
   }
