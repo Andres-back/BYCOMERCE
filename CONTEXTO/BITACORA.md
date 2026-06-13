@@ -4,6 +4,45 @@ Registro operativo de avances relevantes del MVP. Este archivo complementa la do
 
 ---
 
+## 2026-06-13 - Pulido visual frontend con referencia comercial Daimuz
+
+### Contexto
+
+Se tomo como referencia visual `https://daimuz.alexsters.works/`: interfaz comercial compacta, verde primario fuerte, acento calido, radios de 8-12px, botones de 36-44px, cards con borde suave y acciones agrupadas por prioridad.
+
+### Cambios
+
+Frontend:
+
+- Se ajustaron componentes base:
+  - `Button`: altura y padding mas consistentes, peso semibold, sombras suaves y mejor estado hover/focus.
+  - `Input`: altura de 40px, padding estable, sombra ligera y focus mas limpio.
+  - `Card`: sombra y titulos mas fuertes para mejorar jerarquia visual.
+- Se mejoro el shell admin:
+  - header mas compacto.
+  - sidebar con item activo plano y claro usando `primary`, no gradiente fijo.
+  - estados hover y avatar/logo con bordes mas sobrios.
+  - fondo admin con acento primario y calido, manteniendo soporte dark.
+- `AdminPageLayout` ahora distribuye mejor las acciones en desktop y mobile.
+- `StatCard` queda mas compacta, con valores fuertes y mejor control de overflow.
+- `/admin/pos` fue pulido:
+  - barra superior `Caja operativa` con turno, items y total.
+  - buscador con boton primario `Agregar`.
+  - chips de productos mas comerciales con precio visible.
+  - tabla con encabezado uppercase, hover de filas y estado vacio mas claro.
+  - zona de pago con boton principal alineado a branding.
+  - panel lateral de factura con cabecera `primary`, inputs/selects uniformes y metodos de pago mas legibles.
+
+### Validacion
+
+- `npm run typecheck --workspace frontend`: OK.
+- ESLint focalizado en componentes UI, shell admin, stat card y POS: OK.
+- `npm run build --workspace frontend`: OK.
+- Navegador integrado en `/admin/pos`: nuevo layout visible, asistente presente, consola sin errores.
+- Smoke assets Next desde `/admin/pos`: 22 archivos `.css`/`.js` validados con 200.
+
+---
+
 ## 2026-06-13 - POS tipo factura y asistente IA visible
 
 ### Contexto

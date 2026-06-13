@@ -411,7 +411,7 @@ export default function PosClient() {
           <span className="font-semibold">Atencion de inventario:</span>
           <span>{outOfStockCount} producto(s) agotado(s).</span>
           <a href="/admin/inventory" className="font-semibold text-emerald-700 hover:underline dark:text-emerald-300">
-            Revisar inventario →
+            Revisar inventario
           </a>
           <span className="ml-auto hidden items-center gap-2 text-xs text-muted-foreground lg:flex">
             <kbd className="rounded border bg-background px-1.5 py-0.5">Ctrl+F</kbd> Buscar
@@ -421,14 +421,25 @@ export default function PosClient() {
         </div>
       </div>
       <div className="space-y-4 p-4 lg:p-5">
+        <div className="flex flex-col gap-3 rounded-xl border border-border/80 bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">Caja operativa</p>
+            <h1 className="truncate text-xl font-black tracking-tight">Punto de venta</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border bg-background px-2.5 py-1">Turno: {currentCashRegister?.estado === 'ABIERTA' ? 'Abierto' : 'Sin caja'}</span>
+            <span className="rounded-full border bg-background px-2.5 py-1">{cart.length} item{cart.length === 1 ? '' : 's'}</span>
+            <span className="rounded-full border bg-background px-2.5 py-1 font-semibold text-primary">{formatCopCentavos(totalCentavos)}</span>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[270px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[286px_minmax(0,1fr)]">
         <div className="space-y-4 xl:order-2">
-          <Card className="overflow-hidden rounded-lg border-border shadow-sm">
+          <Card className="admin-card overflow-hidden">
             <CardContent className="space-y-3 p-3">
-              <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_86px_118px_42px_42px]">
+              <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_86px_124px_42px_132px]">
                 <div className="relative">
-                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                     <span>Producto / Articulo</span>
                     <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px]">F4</kbd>
                   </div>
@@ -451,7 +462,7 @@ export default function PosClient() {
                   )}
                 </div>
                 <div>
-                  <Label className="text-xs">Cant.</Label>
+                  <Label className="text-xs font-semibold">Cant.</Label>
                   <Input
                     className="mt-1 h-10 text-center"
                     type="number"
@@ -461,19 +472,20 @@ export default function PosClient() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Precio unit.</Label>
+                  <Label className="text-xs font-semibold">Precio unit.</Label>
                   <Input className="mt-1 h-10" readOnly placeholder="Precio" value={productSuggestions[0] ? formatCopCentavos(productSuggestions[0].precio) : ''} />
                 </div>
                 <Button type="button" variant="outline" className="mt-auto h-10" title="Escanear codigo">
                   <ScanLine className="size-4" />
                 </Button>
-                <Button type="button" className="mt-auto h-10 bg-teal-600 hover:bg-teal-700" onClick={() => addQuickProduct()}>
+                <Button type="button" className="mt-auto h-10 bg-primary hover:bg-primary/90" onClick={() => addQuickProduct()}>
                   <Plus className="size-4" />
+                  Agregar
                 </Button>
               </div>
 
               {searchInput.trim().length > 0 && (
-                <div className="flex gap-2 overflow-x-auto rounded-md border bg-background p-2">
+                <div className="scrollbar-thin flex gap-2 overflow-x-auto rounded-lg border bg-background p-2">
                   {loadingProducts ? (
                     <Skeleton className="h-8 w-48" />
                   ) : productSuggestions.length === 0 ? (
@@ -486,13 +498,14 @@ export default function PosClient() {
                         disabled={product.stock <= 0}
                         onClick={() => addQuickProduct(product)}
                         className={cn(
-                          'shrink-0 rounded-md border px-3 py-1.5 text-left text-xs transition-colors',
+                          'shrink-0 rounded-lg border bg-card px-3 py-2 text-left text-xs shadow-xs transition-colors',
                           product.stock <= 0
                             ? 'cursor-not-allowed opacity-50'
-                            : 'hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/30',
+                            : 'hover:border-primary/45 hover:bg-accent',
                         )}
                       >
-                        <span className="block max-w-48 truncate font-semibold">{product.nombre}</span>
+                        <span className="block max-w-52 truncate font-bold">{product.nombre}</span>
+                        <span className="mt-1 block font-bold text-primary">{formatCopCentavos(product.precio)}</span>
                         <span className="text-muted-foreground">{product.sku || 'Sin SKU'} · Stock {product.stock}</span>
                       </button>
                     ))
@@ -500,10 +513,10 @@ export default function PosClient() {
                 </div>
               )}
 
-              <div className="overflow-hidden rounded-md border">
-                <div className="max-h-[43vh] min-h-[360px] overflow-auto">
+              <div className="overflow-hidden rounded-lg border">
+                <div className="scrollbar-thin max-h-[43vh] min-h-[360px] overflow-auto">
                   <table className="w-full min-w-[920px] text-sm">
-                    <thead className="sticky top-0 z-10 bg-muted text-xs text-muted-foreground">
+                    <thead className="sticky top-0 z-10 bg-muted text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       <tr className="border-b">
                         <th className="w-10 px-2 py-2 text-left"></th>
                         <th className="w-12 px-2 py-2 text-left">#</th>
@@ -521,12 +534,16 @@ export default function PosClient() {
                       {cart.length === 0 ? (
                         <tr>
                           <td colSpan={10} className="h-72 text-center text-muted-foreground">
-                            Busca un producto y agregalo a la factura.
+                            <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
+                              <Search className="size-8 text-primary/60" />
+                              <span className="font-semibold text-foreground">Busca un producto y agregalo a la factura</span>
+                              <span className="text-xs">Usa el buscador superior o el lector de codigo.</span>
+                            </div>
                           </td>
                         </tr>
                       ) : (
                         cart.map((item, index) => (
-                          <tr key={item.product.id} className="border-b bg-background">
+                          <tr key={item.product.id} className="border-b bg-background transition-colors hover:bg-muted/35">
                             <td className="px-2 py-2">
                               <Button
                                 type="button"
@@ -558,8 +575,8 @@ export default function PosClient() {
                             </td>
                             <td className="px-2 py-2 text-right tabular-nums">{formatCopCentavos(item.product.precio)}</td>
                             <td className="px-2 py-2 text-right tabular-nums">{formatCopCentavos(item.product.precio * item.quantity)}</td>
-                            <td className="px-2 py-2 text-right font-semibold tabular-nums text-teal-600">{formatCopCentavos(item.product.precio * item.quantity)}</td>
-                            <td className="px-2 py-2 text-center text-teal-600">—</td>
+                            <td className="px-2 py-2 text-right font-semibold tabular-nums text-primary">{formatCopCentavos(item.product.precio * item.quantity)}</td>
+                            <td className="px-2 py-2 text-center text-primary">-</td>
                           </tr>
                         ))
                       )}
@@ -568,9 +585,9 @@ export default function PosClient() {
                       <tr>
                         <td colSpan={3} className="px-4 py-2">{cart.length} item{cart.length === 1 ? '' : 's'}</td>
                         <td colSpan={2} className="px-4 py-2 text-right font-semibold">{formatNumber(cart.reduce((sum, item) => sum + item.quantity, 0))}</td>
-                        <td colSpan={2} className="px-4 py-2 text-right">Totales →</td>
+                        <td colSpan={2} className="px-4 py-2 text-right">Totales</td>
                         <td className="px-2 py-2 text-right font-bold">{formatCopCentavos(totalCentavos)}</td>
-                        <td className="px-2 py-2 text-right font-bold text-teal-600">{formatCopCentavos(totalCentavos)}</td>
+                        <td className="px-2 py-2 text-right font-bold text-primary">{formatCopCentavos(totalCentavos)}</td>
                         <td />
                       </tr>
                     </tfoot>
@@ -578,7 +595,7 @@ export default function PosClient() {
                 </div>
               </div>
 
-              <div className="grid gap-3 rounded-lg border bg-card p-3 xl:grid-cols-[minmax(260px,1fr)_minmax(340px,0.9fr)_172px]">
+              <div className="grid gap-3 rounded-xl border bg-card p-3 xl:grid-cols-[minmax(260px,1fr)_minmax(340px,0.9fr)_184px]">
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between border-b pb-1">
                     <span className="text-muted-foreground">Subtotal bruto:</span>
@@ -592,7 +609,7 @@ export default function PosClient() {
                   )}
                   <div className="flex justify-between pt-1 text-lg font-black">
                     <span>TOTAL:</span>
-                    <span className="text-teal-600">{formatCopCentavos(totalCentavos)}</span>
+                    <span className="text-primary">{formatCopCentavos(totalCentavos)}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -624,7 +641,7 @@ export default function PosClient() {
                   </Button>
                   <Button
                     type="button"
-                    className="h-10 justify-center bg-blue-600 hover:bg-blue-700"
+                    className="h-11 justify-center bg-primary hover:bg-primary/90"
                     disabled={isSubmitting || cart.length === 0 || !cashSufficient}
                     onClick={() => formRef.current?.requestSubmit()}
                   >
@@ -640,8 +657,8 @@ export default function PosClient() {
 
         <div className="xl:order-1">
           <form ref={formRef} onSubmit={handleCreateSale} className="xl:sticky xl:top-20">
-            <Card className="overflow-hidden rounded-lg border-border shadow-sm">
-              <CardHeader className="bg-teal-600 px-4 py-3 text-white">
+            <Card className="admin-card overflow-hidden">
+              <CardHeader className="bg-primary px-4 py-3 text-primary-foreground">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-bold">Factura de Venta</CardTitle>
                   <Badge className="bg-white/20 text-white hover:bg-white/20">
@@ -649,11 +666,11 @@ export default function PosClient() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-4">
                 <div className="space-y-3 pt-3">
                   <div className="space-y-1">
                     <Label className="text-xs">Tipo Documento</Label>
-                    <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    <select className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-xs">
                       <option>Factura de Venta</option>
                       <option>Recibo POS</option>
                     </select>
@@ -661,11 +678,11 @@ export default function PosClient() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Fecha</Label>
-                      <Input className="h-9" readOnly value={new Date().toLocaleDateString('es-CO')} />
+                      <Input className="h-10" readOnly value={new Date().toLocaleDateString('es-CO')} />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">No. Factura</Label>
-                      <Input className="h-9" readOnly value="Auto" />
+                      <Input className="h-10" readOnly value="Auto" />
                     </div>
                   </div>
                 </div>
@@ -769,10 +786,10 @@ export default function PosClient() {
                         key={method}
                         type="button"
                         className={cn(
-                          'rounded-lg border p-2 text-sm font-medium transition-colors',
+                          'h-10 rounded-lg border px-2 text-sm font-semibold shadow-xs transition-colors',
                           paymentMethod === method
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-background hover:bg-muted',
+                            ? 'border-primary bg-primary text-primary-foreground shadow-primary/15'
+                            : 'border-border bg-background hover:border-primary/35 hover:bg-accent',
                         )}
                         onClick={() => setPaymentMethod(method)}
                       >
@@ -907,7 +924,7 @@ export default function PosClient() {
 
                 <div className="space-y-1">
                   <Label className="text-xs">Forma de Pago</Label>
-                  <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <select className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-xs">
                     <option>Contado</option>
                   </select>
                 </div>
@@ -928,7 +945,7 @@ export default function PosClient() {
                 )}
 
                 <Button
-                  className="w-full"
+                  className="w-full justify-center"
                   type="button"
                   variant="outline"
                   onClick={() => { refetchSales(); }}
@@ -942,7 +959,7 @@ export default function PosClient() {
         </div>
       </div>
 
-      <Card>
+      <Card className="admin-card">
         <CardHeader>
           <CardTitle>Ventas recientes</CardTitle>
         </CardHeader>

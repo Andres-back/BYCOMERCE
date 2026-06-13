@@ -79,10 +79,10 @@ function NavLink({ href, label, icon, exact, pathname, collapsed }: {
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200',
         active
-          ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/25'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+          : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
       )}
       title={collapsed ? label : undefined}
     >
@@ -104,9 +104,9 @@ function SidebarContent({ pathname }: { pathname: string }) {
       <div className={cn('flex items-center gap-3 border-b border-sidebar-border px-4', collapsed ? 'justify-center py-4' : 'py-4')}>
         {branding.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={branding.logo} alt={branding.businessName} className="size-9 rounded-xl object-cover ring-2 ring-teal-100" />
+          <img src={branding.logo} alt={branding.businessName} className="size-9 rounded-lg object-cover ring-1 ring-primary/20" />
         ) : (
-          <Image src="/icons/icono.png" alt="Mocoa Market" width={36} height={36} className="rounded-xl ring-2 ring-teal-100" unoptimized />
+          <Image src="/icons/icono.png" alt="Mocoa Market" width={36} height={36} className="rounded-lg ring-1 ring-primary/20" unoptimized />
         )}
         {!collapsed && (
           <div className="flex-1 min-w-0">
@@ -117,7 +117,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+      <nav className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-3">
         {/* Dashboard */}
         <div className="space-y-1">
           <NavLink
@@ -137,7 +137,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
           return (
             <div key={group.label} className="space-y-1">
               {!collapsed && (
-                <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                <p className="px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
                   {group.label}
                 </p>
               )}
@@ -167,9 +167,9 @@ function SidebarContent({ pathname }: { pathname: string }) {
       {/* User */}
       <Separator />
       <div className="p-3">
-        <div className={cn('flex items-center gap-3 rounded-xl px-2 py-2', !collapsed && 'hover:bg-muted/50')}>
-          <Avatar className="size-9 ring-2 ring-teal-100">
-            <AvatarFallback className="bg-gradient-to-br from-teal-500 to-emerald-500 text-xs font-bold text-white">
+        <div className={cn('flex items-center gap-3 rounded-lg border border-transparent px-2 py-2', !collapsed && 'hover:border-border hover:bg-muted/50')}>
+          <Avatar className="size-9 ring-1 ring-primary/20">
+            <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -213,7 +213,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
         {/* Main */}
         <div className="flex flex-1 flex-col">
           {/* Header */}
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/88 px-4 backdrop-blur-xl lg:px-6">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-xl lg:px-6">
             <Sheet>
               <SheetTrigger render={<Button variant="outline" size="icon" className="lg:hidden border-border" />}>
                 <Menu className="size-4" />
@@ -229,7 +229,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
                 title={isDark ? 'Modo claro' : 'Modo oscuro'}
               >
                 {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -237,7 +237,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
               <NotificationBell />
               <Link
                 href="/"
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex h-9 items-center gap-2 rounded-lg border border-transparent px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
               >
                 <AppIcon name="tienda" className="size-4" />
                 <span className="hidden sm:inline">Tienda</span>
@@ -246,7 +246,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
           </header>
 
           {/* Content */}
-          <main className="flex-1 p-4 lg:p-8 min-w-0 overflow-hidden">{children}</main>
+          <main className="min-w-0 flex-1 overflow-hidden p-4 lg:p-6 xl:p-8">{children}</main>
         </div>
       </div>
     </BrandingProvider>
