@@ -4,13 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Bot, Send, Sparkles, X, ChevronRight, AlertCircle, TrendingUp, TrendingDown,
-  Package, ShoppingCart, Users, DollarSign, Calendar, ExternalLink, Loader2,
+  Bot, Send, Sparkles, X, ChevronRight, AlertCircle, Loader2,
   ThumbsUp, ThumbsDown, RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { chat, type AssistantCard, type AssistantMessage } from '@/services/assistant/assistant.service';
 import { useAuthStore } from '@/stores/auth-store';

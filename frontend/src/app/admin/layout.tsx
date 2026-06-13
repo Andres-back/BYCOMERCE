@@ -15,6 +15,7 @@ import { NotificationBell } from '@/components/shared/notification-bell';
 import { BrandingProvider, useBranding } from '@/providers/branding-provider';
 import { AppIcon } from '@/components/shared/app-icon';
 import { CommandPalette } from '@/components/shared/command-palette';
+import { AssistantButton } from '@/components/shared/assistant-button';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
@@ -202,6 +203,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   return (
     <BrandingProvider>
       <CommandPalette />
+      <AssistantButton />
       <div className="admin-shell-bg flex min-h-screen">
         {/* Desktop Sidebar */}
         <aside className="hidden w-64 shrink-0 border-r border-border shadow-sm lg:block" style={{ backgroundColor: 'var(--color-sidebar)' }}>

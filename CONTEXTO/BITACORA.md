@@ -4,6 +4,47 @@ Registro operativo de avances relevantes del MVP. Este archivo complementa la do
 
 ---
 
+## 2026-06-13 - POS tipo factura y asistente IA visible
+
+### Contexto
+
+Se reviso la pantalla `/admin/pos` contra la referencia visual enviada por el usuario. La prioridad fue acercar el punto de venta al flujo de factura operativa: panel de datos de venta a la izquierda, busqueda rapida de producto, tabla de items, totales y pago en una misma vista. Tambien se corrigio que el asistente IA no estaba visible en el panel admin.
+
+### Cambios
+
+Frontend:
+
+- `/admin/pos` ahora usa una estructura tipo factura con:
+  - alerta superior de inventario agotado.
+  - buscador de producto/articulo con cantidad, precio de referencia, escaneo y boton de agregar.
+  - tabla de lineas con codigo, descripcion, cantidad, descuento, valor unitario, subtotal, total y referencia.
+  - barra inferior con subtotal bruto, total, efectivo, cambio y acciones `Nueva F3` / `Guardar e Imprimir F12`.
+  - panel lateral `Factura de Venta` con tipo de documento, fecha, numero automatico, cliente, metodo de pago, forma de pago y descuento global.
+- Se agregaron atajos `F3` para nueva venta y `F12` para guardar/imprimir.
+- El descuento global del POS se interpreta como porcentaje, alineado con el campo de la UI.
+- El asistente IA se monto en `AdminLayout`, por lo que ahora aparece como boton flotante en las pantallas de administracion para usuarios de tenant.
+- Se limpiaron imports y codigo muerto de la pantalla POS y del boton del asistente.
+
+### Validacion
+
+- `npm run typecheck --workspace frontend`: OK.
+- ESLint focalizado en POS, layout admin y asistente: OK.
+- `npm run build --workspace frontend`: OK.
+- Navegador integrado:
+  - login demo `admin@demo.com` / tenant `tienda-demo-mocoa`: OK.
+  - `/admin/pos`: muestra layout tipo factura y boton `Abrir asistente`.
+  - asistente: abre panel `Asistente IA` con preguntas rapidas y caja de texto.
+  - consola: sin errores.
+- Smoke assets Next desde `/admin/pos`: 22 archivos `.css`/`.js` validados con 200.
+
+### Pendiente proximo
+
+- Afinar visualmente el POS en resoluciones ultra anchas y tablet.
+- Conectar impresion real/recibo y flujo de apertura/cierre de turno.
+- Agregar prueba e2e del flujo POS completo cuando el entorno de test visual quede estable.
+
+---
+
 ## 2026-06-13 - IA multi-tenant, vision de gastos y landings premium
 
 ### Contexto
