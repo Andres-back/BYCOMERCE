@@ -1,5 +1,5 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api/client';
-import { CashMovement, CashMovementType, CashRegister, Expense } from '@/types/api';
+import { CashMovement, CashMovementType, CashRegister, Expense, ExpenseReceiptExtractionResult } from '@/types/api';
 
 export interface OpenCashRegisterInput {
   saldoInicial: number;
@@ -28,7 +28,18 @@ export interface CreateExpenseInput {
   descripcion: string;
   valor: number;
   comprobanteUrl?: string;
+  comprobanteNombre?: string;
+  comprobanteMime?: string;
+  comprobanteIaTexto?: string;
+  comprobanteIaJson?: Record<string, unknown>;
   fecha?: string;
+}
+
+export interface ExtractExpenseReceiptInput {
+  fileBase64: string;
+  mimeType: string;
+  fileName?: string;
+  model?: string;
 }
 
 function toQuery(filters?: ExpenseFilters) {
@@ -68,6 +79,10 @@ export function listExpenses(token: string, filters?: ExpenseFilters) {
 
 export function createExpense(token: string, input: CreateExpenseInput) {
   return apiPost<Expense, CreateExpenseInput>('/expenses', input, token);
+}
+
+export function extractExpenseReceipt(token: string, input: ExtractExpenseReceiptInput) {
+  return apiPost<ExpenseReceiptExtractionResult, ExtractExpenseReceiptInput>('/expenses/receipt/extract', input, token);
 }
 
 export function updateExpense(token: string, id: string, input: Partial<CreateExpenseInput>) {

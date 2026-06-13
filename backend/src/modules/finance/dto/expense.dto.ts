@@ -1,6 +1,8 @@
 import {
   IsDateString,
   IsInt,
+  IsMimeType,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
@@ -44,6 +46,25 @@ export class CreateExpenseDto {
   comprobanteUrl?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  comprobanteNombre?: string;
+
+  @IsOptional()
+  @IsMimeType()
+  @MaxLength(120)
+  comprobanteMime?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  comprobanteIaTexto?: string;
+
+  @IsOptional()
+  @IsObject()
+  comprobanteIaJson?: Record<string, unknown>;
+
+  @IsOptional()
   @IsDateString()
   fecha?: string;
 }
@@ -68,4 +89,23 @@ export class UpdateExpenseDto {
   @IsString()
   @MaxLength(500)
   comprobanteUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  comprobanteNombre?: string;
+
+  @IsOptional()
+  @IsMimeType()
+  @MaxLength(120)
+  comprobanteMime?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  comprobanteIaTexto?: string;
+
+  @IsOptional()
+  @IsObject()
+  comprobanteIaJson?: Record<string, unknown>;
 }

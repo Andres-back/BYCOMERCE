@@ -179,12 +179,8 @@ export function AssistantButton() {
   const qc = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Don't show for super admin (they have their own panel)
-  if (isSuperAdmin) return null;
-
-  // Initial greeting
-  useEffect(() => {
-    if (open && messages.length === 0) {
+  function openAssistant() {
+    if (messages.length === 0) {
       setMessages([
         {
           role: 'assistant',
@@ -195,7 +191,8 @@ export function AssistantButton() {
         },
       ]);
     }
-  }, [open, messages.length, branding.businessName]);
+    setOpen(true);
+  }
 
   // Auto-scroll
   useEffect(() => {
@@ -238,6 +235,7 @@ export function AssistantButton() {
   }
 
   function handleFeedback(msg: AssistantMessage, positive: boolean) {
+    void msg;
     toast.success(positive ? 'Gracias por tu feedback' : 'Tomaremos nota para mejorar');
   }
 
@@ -254,13 +252,16 @@ export function AssistantButton() {
     qc.invalidateQueries({ queryKey: ['assistant'] });
   }
 
+  // Don't show for super admin (they have their own panel)
+  if (isSuperAdmin) return null;
+
   return (
     <>
       {/* Floating button */}
       {!open && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openAssistant}
           aria-label="Abrir asistente"
           className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
           style={{ background: 'var(--brand-primary, #0d9488)' }}

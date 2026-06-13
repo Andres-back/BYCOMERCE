@@ -9,8 +9,8 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 @Injectable()
 export class UploadsService {
@@ -54,7 +54,13 @@ export class UploadsService {
 
   generateKey(tenantId: string, folder: string, filename: string) {
     const ext = filename.split('.').pop() ?? 'jpg';
-    return `tenants/${tenantId}/${folder}/${randomUUID()}.${ext}`;
+    return `tenants/${tenantId}/${this.safeFolder(folder)}/${randomUUID()}.${ext}`;
+  }
+
+  safeFolder(folder: string | undefined) {
+    const value = folder?.trim().toLowerCase() || 'uploads';
+    if (!/^[a-z0-9/_-]{1,80}$/.test(value)) return 'uploads';
+    return value.replace(/^\/+|\/+$/g, '') || 'uploads';
   }
 
   async getPresignedUploadUrl(tenantId: string, folder: string, filename: string, mimetype: string) {

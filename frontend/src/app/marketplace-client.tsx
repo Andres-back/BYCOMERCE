@@ -95,7 +95,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
   const businessRef = useGsapStagger<HTMLDivElement>(filteredBusinesses.length, { stagger: 0.06 });
   const productRef = useGsapStagger<HTMLDivElement>(filteredProducts.length, { stagger: 0.05 });
 
-  const SidebarContent = () => (
+  const renderSidebarContent = () => (
     <div className="space-y-6">
       <Card className="border-0 shadow-sm">
         <CardContent className="p-5">
@@ -279,7 +279,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
         <div className="flex gap-8">
           {/* Sidebar - desktop */}
           <aside className="hidden w-64 shrink-0 lg:block">
-            <SidebarContent />
+            {renderSidebarContent()}
           </aside>
 
           {/* Mobile filter button */}
@@ -289,7 +289,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 <Filter className="mr-2 size-4" /> Filtros
               </Button>} />
               <SheetContent side="left" className="w-72 p-4">
-                <SidebarContent />
+                {renderSidebarContent()}
               </SheetContent>
             </Sheet>
           </div>

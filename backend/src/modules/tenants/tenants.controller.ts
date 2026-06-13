@@ -18,6 +18,8 @@ import { CancelSubscriptionDto } from './dto/cancel-subscription.dto';
 import { ChangePlanDto } from './dto/change-plan.dto';
 import { RegisterSubscriptionPaymentDto } from './dto/register-subscription-payment.dto';
 import { UpdateBusinessProfileDto } from './dto/update-business-profile.dto';
+import { BrandingVisionDto } from '../ai/dto/vision.dto';
+import { UpdateTenantAiSettingsDto } from '../ai/dto/ai-settings.dto';
 import {
   CreateBusinessImageDto,
   ReorderBusinessImagesDto,
@@ -52,6 +54,24 @@ export class TenantsController {
   @Roles(RoleName.ADMIN_NEGOCIO)
   updateSettings(@CurrentUser() user: RequestUser, @Body() dto: UpdateBusinessProfileDto) {
     return this.tenantsService.updateBusinessProfile(user, dto);
+  }
+
+  @Get('tenants/me/ai-settings')
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR)
+  getAiSettings(@CurrentUser() user: RequestUser) {
+    return this.tenantsService.getAiSettings(user);
+  }
+
+  @Patch('tenants/me/ai-settings')
+  @Roles(RoleName.ADMIN_NEGOCIO)
+  updateAiSettings(@CurrentUser() user: RequestUser, @Body() dto: UpdateTenantAiSettingsDto) {
+    return this.tenantsService.updateAiSettings(user, dto);
+  }
+
+  @Post('tenants/me/ai/branding/suggest')
+  @Roles(RoleName.ADMIN_NEGOCIO)
+  suggestBranding(@CurrentUser() user: RequestUser, @Body() dto: BrandingVisionDto) {
+    return this.tenantsService.suggestBrandingFromImage(user, dto);
   }
 
   @Get('tenants/me/gallery')

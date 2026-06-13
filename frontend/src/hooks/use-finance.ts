@@ -10,6 +10,7 @@ import {
   closeCashRegister,
   listExpenses,
   createExpense,
+  extractExpenseReceipt,
   updateExpense,
   deleteExpense,
   createCashMovement,
@@ -90,7 +91,7 @@ export function useCreateExpense() {
   const token = useToken();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { categoria: string; descripcion: string; valor: number; comprobanteUrl?: string; fecha?: string }) =>
+    mutationFn: (input: { categoria: string; descripcion: string; valor: number; comprobanteUrl?: string; comprobanteNombre?: string; comprobanteMime?: string; comprobanteIaTexto?: string; comprobanteIaJson?: Record<string, unknown>; fecha?: string }) =>
       createExpense(token!, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['expenses'] });
@@ -102,11 +103,19 @@ export function useUpdateExpense() {
   const token = useToken();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<{ categoria: string; descripcion: string; valor: number; comprobanteUrl?: string }> }) =>
+    mutationFn: ({ id, input }: { id: string; input: Partial<{ categoria: string; descripcion: string; valor: number; comprobanteUrl?: string; comprobanteNombre?: string; comprobanteMime?: string; comprobanteIaTexto?: string; comprobanteIaJson?: Record<string, unknown> }> }) =>
       updateExpense(token!, id, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['expenses'] });
     },
+  });
+}
+
+export function useExtractExpenseReceipt() {
+  const token = useToken();
+  return useMutation({
+    mutationFn: (input: { fileBase64: string; mimeType: string; fileName?: string; model?: string }) =>
+      extractExpenseReceipt(token!, input),
   });
 }
 

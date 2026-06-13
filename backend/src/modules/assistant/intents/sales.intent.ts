@@ -1,6 +1,6 @@
 import { PrismaService } from '../../../database/prisma.service';
-import { IntentDefinition, IntentResult } from './intent.types';
-import { formatCentavosToCop, formatNumber, getPeriodRange } from './helpers';
+import { IntentDefinition } from './intent.types';
+import { formatCentavosToCop, getPeriodRange } from './helpers';
 import { EstadoGeneral, Prisma, Sale } from '../../../database/prisma-client';
 
 type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: { include: { product: true } } } }>;

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PromotionType, PromotionScope, CouponType } from '../../database/prisma-client';
+import { PromotionType, PromotionScope, CouponType, Prisma } from '../../database/prisma-client';
 import { CreatePromotionDto, UpdatePromotionDto, CreateCouponDto, UpdateCouponDto } from './dto/create-promotion.dto';
 
 @Injectable()
@@ -51,10 +51,10 @@ export class PromotionsService {
 
   async updatePromotion(tenantId: string, id: string, dto: UpdatePromotionDto, usuarioId: string) {
     const existing = await this.getPromotion(tenantId, id);
-    const { productIds, ...data } = dto;
-    const updateData: any = { ...data };
-    if (data.fechaInicio) updateData.fechaInicio = new Date(data.fechaInicio);
-    if (data.fechaFin) updateData.fechaFin = new Date(data.fechaFin);
+    const { productIds, fechaInicio, fechaFin, ...data } = dto;
+    const updateData: Prisma.PromotionUncheckedUpdateInput = { ...data };
+    if (fechaInicio) updateData.fechaInicio = new Date(fechaInicio);
+    if (fechaFin) updateData.fechaFin = new Date(fechaFin);
 
     if (productIds) {
       await this.prisma.promotionProduct.deleteMany({ where: { promotionId: id } });

@@ -26,6 +26,16 @@ import { DeliverOrderDto } from './dto/deliver-order.dto';
 
 const RESERVATION_TTL_MINUTES = 30;
 
+type DeliveryRouteOrder = Prisma.OrderGetPayload<{
+  include: {
+    customer: { select: { nombre: true; telefono: true; direccion: true } };
+    deliveryUser: { select: { id: true; nombre: true } };
+    items: { include: { product: { select: { nombre: true } } } };
+  };
+}>;
+
+type DeliveryRouteOrderWithDistance = DeliveryRouteOrder & { distanciaKm: number };
+
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -140,7 +150,7 @@ export class OrdersService {
 
   listOrders(user: RequestUser) {
     const tenantId = this.requireTenant(user);
-    const where: any = { tenantId };
+    const where: Prisma.OrderWhereInput = { tenantId };
 
     if (user.rol === RoleName.CAJERO) {
       return [];
@@ -273,7 +283,7 @@ export class OrdersService {
     });
     if (!tenant) throw new NotFoundException('Tenant no encontrado');
 
-    const where: any = {
+    const where: Prisma.OrderWhereInput = {
       tenantId: user.tenantId,
       estado: { in: [OrderStatus.EN_CAMINO, OrderStatus.LISTO_PARA_ENTREGA] },
     };
@@ -292,7 +302,7 @@ export class OrdersService {
       orderBy: { fecha: 'asc' },
     });
 
-    const sorted: any[] = [];
+    const sorted: DeliveryRouteOrderWithDistance[] = [];
     const remaining = [...orders];
     let currentLat = tenant.latitud ?? 1.149;
     let currentLng = tenant.longitud ?? -76.647;

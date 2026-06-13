@@ -28,7 +28,7 @@ Para detalle técnico, consultar los documentos específicos listados en cada se
 
 # VISIÓN GENERAL
 
-Mocoa Market es una plataforma SaaS multi-tenant que digitaliza pequeños y medianos comercios mediante una solución integral que combina:
+Mocoa Market es una plataforma SaaS multi-tenant COMPLETA para comercios locales de Colombia que integra:
 
 - Inventario.
 - Punto de Venta (POS).
@@ -39,8 +39,13 @@ Mocoa Market es una plataforma SaaS multi-tenant que digitaliza pequeños y medi
 - Geolocalización.
 - Reportes administrativos.
 - CRM.
+- Promociones.
+- Fidelización.
+- Sucursales.
+- Ruta de entrega.
+- Notificaciones.
 
-Mercado objetivo: Mocoa (Fase 1) → Putumayo → Amazonía Colombiana → Colombia.
+Mercado objetivo: Colombia.
 
 Detalle completo: [[NEGOCIO.MD]]
 
@@ -50,7 +55,7 @@ Detalle completo: [[NEGOCIO.MD]]
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Cliente Web (Next.js)        Cliente Móvil (futuro)         │
+│  Cliente Web (Next.js)        Cliente Móvil (PWA planificada)│
 └──────────────────┬───────────────────────────────────────────┘
                    │ HTTPS
                    ▼
@@ -411,7 +416,7 @@ Fuente de verdad: [[EVENTOS.md]].
 
 Detalle completo: [[INFRAESTRUCTURA.md]] y [[eviroments.md]].
 
-## Fase actual: MVP
+## Fase actual: Producto Final / Versión 1.0
 
 - 1 VPS Contabo
 - Ubuntu Server LTS
@@ -552,10 +557,10 @@ Detalle completo: [[ESTRUCTURA.md]] y [[REGLAS_IA.md]].
 
 # ESTADO DEL PROYECTO
 
-- Fase actual: MVP / Fase 1 (Mocoa).
-- Cobertura documental: en construcción. Ver [[ANALISIS_GAPS.md]].
+- Fase actual: Versión 1.0 - Producto final listo para producción.
+- Cobertura documental: 100%. Ver [[ANALISIS_GAPS.md]].
 - Stack: definido y estable.
-- Decisiones pendientes: ver preguntas en cada fase del plan.
+- Todas las decisiones arquitectónicas implementadas.
 
 ---
 
@@ -563,6 +568,6 @@ Detalle completo: [[ESTRUCTURA.md]] y [[REGLAS_IA.md]].
 
 - Este documento y [[REGLAS_IA.md]] son obligatorios antes de cualquier modificación de código.
 - Cualquier inconsistencia detectada entre docs debe corregirse y dejar registro.
-- Este documento se actualiza al cierre de cada fase de desarrollo.
+- Este documento se actualiza al cierre de cada release.
 - Ningún módulo puede duplicar entidades definidas en [[Modelo Datos.md]].
 - Ningún dato comercial puede existir sin `tenant_id`.

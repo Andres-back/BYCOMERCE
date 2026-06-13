@@ -6,13 +6,14 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
-import { apiPost } from '@/services/api/client';
+import type { ApiEnvelope } from '@/types/api';
 
 interface UploadResponse {
   key: string;
   url: string;
   size: number;
   mimetype: string;
+  originalName?: string;
 }
 
 interface ImageUploaderProps {
@@ -64,6 +65,7 @@ export function ImageUploader({
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('folder', folder);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
         {
@@ -76,7 +78,8 @@ export function ImageUploader({
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Error al subir imagen');
       }
-      const data = (await res.json()) as UploadResponse;
+      const payload = (await res.json()) as ApiEnvelope<UploadResponse> | UploadResponse;
+      const data = 'data' in payload ? payload.data : payload;
       onChange(data.url);
       toast.success('Imagen subida');
     } catch (e) {
@@ -205,6 +208,7 @@ export function MultiImageUploader({
         }
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('folder', folder);
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
           {
@@ -217,7 +221,8 @@ export function MultiImageUploader({
           toast.error(`Error al subir ${file.name}`);
           continue;
         }
-        const data = (await res.json()) as UploadResponse;
+        const payload = (await res.json()) as ApiEnvelope<UploadResponse> | UploadResponse;
+        const data = 'data' in payload ? payload.data : payload;
         uploaded.push(data.url);
       }
       onChange([...value, ...uploaded].slice(0, maxItems));

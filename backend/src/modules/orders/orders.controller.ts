@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -18,7 +19,7 @@ export class OrdersController {
   private rateLimits = new Map<string, { count: number; timestamp: number }>();
 
   @Post()
-  createPublic(@Body() dto: CreateOrderDto, @Req() req: any) {
+  createPublic(@Body() dto: CreateOrderDto, @Req() req: Request) {
     const ip = req.ip || 'unknown';
     const now = Date.now();
     const limit = this.rateLimits.get(ip);

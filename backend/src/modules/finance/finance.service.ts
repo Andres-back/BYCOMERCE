@@ -8,6 +8,8 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { RequestUser } from '../../common/types/request-user';
 import { AuditService } from '../audit/audit.service';
+import { AiVisionService } from '../ai/ai-vision.service';
+import { VisionImageDto } from '../ai/dto/vision.dto';
 import { CloseCashRegisterDto, OpenCashRegisterDto } from './dto/cash-register-action.dto';
 import { CreateCashMovementDto } from './dto/create-cash-movement.dto';
 import { CreateExpenseDto, ExpenseQueryDto, UpdateExpenseDto } from './dto/expense.dto';
@@ -17,6 +19,7 @@ export class FinanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly aiVision: AiVisionService,
   ) {}
 
   listCashRegisters(user: RequestUser) {
@@ -239,6 +242,10 @@ export class FinanceService {
           descripcion: dto.descripcion,
           valor: dto.valor,
           comprobanteUrl: dto.comprobanteUrl,
+          comprobanteNombre: dto.comprobanteNombre,
+          comprobanteMime: dto.comprobanteMime,
+          comprobanteIaTexto: dto.comprobanteIaTexto,
+          comprobanteIaJson: dto.comprobanteIaJson === undefined ? undefined : (dto.comprobanteIaJson as Prisma.InputJsonValue),
           fecha: dto.fecha ? new Date(dto.fecha) : new Date(),
         },
       });
@@ -292,6 +299,10 @@ export class FinanceService {
           descripcion: dto.descripcion,
           valor: dto.valor,
           comprobanteUrl: dto.comprobanteUrl,
+          comprobanteNombre: dto.comprobanteNombre,
+          comprobanteMime: dto.comprobanteMime,
+          comprobanteIaTexto: dto.comprobanteIaTexto,
+          comprobanteIaJson: dto.comprobanteIaJson === undefined ? undefined : (dto.comprobanteIaJson as Prisma.InputJsonValue),
         },
       });
 
@@ -355,6 +366,10 @@ export class FinanceService {
     });
 
     return { id: expense.id, deleted: true };
+  }
+
+  extractExpenseReceipt(user: RequestUser, dto: VisionImageDto) {
+    return this.aiVision.extractExpenseReceipt(this.requireTenant(user), dto);
   }
 
   private async findOrOpenCashRegister(tx: Prisma.TransactionClient, tenantId: string, userId: string) {

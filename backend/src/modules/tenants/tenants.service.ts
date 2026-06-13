@@ -10,6 +10,10 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { RequestUser } from '../../common/types/request-user';
 import { AuditService } from '../audit/audit.service';
+import { AiConfigService } from '../ai/ai-config.service';
+import { AiVisionService } from '../ai/ai-vision.service';
+import { BrandingVisionDto } from '../ai/dto/vision.dto';
+import { UpdateTenantAiSettingsDto } from '../ai/dto/ai-settings.dto';
 import { CancelSubscriptionDto } from './dto/cancel-subscription.dto';
 import { ChangePlanDto } from './dto/change-plan.dto';
 import { RegisterSubscriptionPaymentDto } from './dto/register-subscription-payment.dto';
@@ -25,6 +29,8 @@ export class TenantsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly aiConfig: AiConfigService,
+    private readonly aiVision: AiVisionService,
   ) {}
 
   getBusinessProfile(user: RequestUser) {
@@ -70,6 +76,65 @@ export class TenantsService {
     });
     if (!settings) throw new NotFoundException('Tenant no encontrado');
     return settings;
+  }
+
+  getAiSettings(user: RequestUser) {
+    return this.aiConfig.getPublicSettings(this.requireTenant(user));
+  }
+
+  async updateAiSettings(user: RequestUser, dto: UpdateTenantAiSettingsDto) {
+    const tenantId = this.requireTenant(user);
+    const settings = await this.aiConfig.updateTenantSettings(tenantId, dto);
+
+    await this.auditService.log({
+      tenantId,
+      usuarioId: user.id,
+      accion: 'NEGOCIO_IA_CONFIGURACION_ACTUALIZADA',
+      entidad: 'tenant_ai_settings',
+      entidadId: tenantId,
+      metadata: {
+        assistantEnabled: settings.assistantEnabled,
+        visionEnabled: settings.visionEnabled,
+        visionProvider: settings.visionProvider,
+        hasGroqApiKey: settings.hasGroqApiKey,
+      },
+    });
+
+    return settings;
+  }
+
+  async suggestBrandingFromImage(user: RequestUser, dto: BrandingVisionDto) {
+    const tenantId = this.requireTenant(user);
+    const suggestion = await this.aiVision.suggestBranding(tenantId, dto);
+    const colors = suggestion.extracted;
+    const updateData = {
+      colorPrimario: colors.colorPrimario ?? undefined,
+      colorSecundario: colors.colorSecundario ?? undefined,
+      colorAcento: colors.colorAcento ?? undefined,
+    };
+    const hasColors = Object.values(updateData).some(Boolean);
+
+    if (hasColors) {
+      await this.prisma.businessSettings.upsert({
+        where: { tenantId },
+        create: {
+          tenantId,
+          ...updateData,
+        },
+        update: updateData,
+      });
+
+      await this.auditService.log({
+        tenantId,
+        usuarioId: user.id,
+        accion: 'NEGOCIO_BRANDING_IA_APLICADO',
+        entidad: 'business_settings',
+        entidadId: tenantId,
+        metadata: updateData,
+      });
+    }
+
+    return { suggestion, applied: hasColors ? updateData : null };
   }
 
   async updateBusinessProfile(user: RequestUser, dto: UpdateBusinessProfileDto) {

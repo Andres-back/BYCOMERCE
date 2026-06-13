@@ -17,6 +17,7 @@ export interface AssistantContext {
   userId: string;
   userName?: string;
   businessName?: string;
+  businessType?: string;
   userRole?: string;
 }
 

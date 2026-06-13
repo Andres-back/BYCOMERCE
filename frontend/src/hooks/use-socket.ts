@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
@@ -27,13 +27,11 @@ function getSocket(token: string): Socket {
 export function useSocket() {
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
-  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (!token) return;
 
     const socket = getSocket(token);
-    socketRef.current = socket;
 
     if (!socket.connected) {
       socket.connect();
@@ -99,5 +97,5 @@ export function useSocket() {
     };
   }, [token, qc]);
 
-  return socketRef.current;
+  return globalSocket;
 }

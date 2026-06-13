@@ -55,6 +55,7 @@ export const queryKeys = {
   tenant: {
     profile: ['tenant', 'profile'] as const,
     settings: ['tenant', 'settings'] as const,
+    aiSettings: ['tenant', 'ai-settings'] as const,
     gallery: ['tenant', 'gallery'] as const,
     subscription: ['tenant', 'subscription'] as const,
     payments: ['tenant', 'payments'] as const,

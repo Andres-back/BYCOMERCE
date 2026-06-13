@@ -5,6 +5,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { RequestUser } from '../../common/types/request-user';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { VisionImageDto } from '../ai/dto/vision.dto';
 import { CreateExpenseDto, ExpenseQueryDto, UpdateExpenseDto } from './dto/expense.dto';
 import { FinanceService } from './finance.service';
 
@@ -23,6 +24,12 @@ export class ExpensesController {
   @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO)
   create(@CurrentUser() user: RequestUser, @Body() dto: CreateExpenseDto) {
     return this.financeService.createExpense(user, dto);
+  }
+
+  @Post('receipt/extract')
+  @Roles(RoleName.ADMIN_NEGOCIO, RoleName.SUPERVISOR, RoleName.CAJERO)
+  extractReceipt(@CurrentUser() user: RequestUser, @Body() dto: VisionImageDto) {
+    return this.financeService.extractExpenseReceipt(user, dto);
   }
 
   @Get(':id')

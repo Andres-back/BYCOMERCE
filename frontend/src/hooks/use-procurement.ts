@@ -7,6 +7,8 @@ import {
   listPurchases,
   getPurchase,
   createPurchase,
+  updatePurchaseInvoice,
+  extractPurchaseInvoice,
   cancelPurchase,
   listSuppliers,
   createSupplier,
@@ -56,6 +58,26 @@ export function useCancelPurchase() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['purchases'] });
     },
+  });
+}
+
+export function useUpdatePurchaseInvoice() {
+  const token = useToken();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof updatePurchaseInvoice>[2] }) =>
+      updatePurchaseInvoice(token!, id, input),
+    onSuccess: (purchase) => {
+      qc.invalidateQueries({ queryKey: ['purchases'] });
+      qc.invalidateQueries({ queryKey: queryKeys.purchases.detail(purchase.id) });
+    },
+  });
+}
+
+export function useExtractPurchaseInvoice() {
+  const token = useToken();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof extractPurchaseInvoice>[1]) => extractPurchaseInvoice(token!, input),
   });
 }
 

@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { IntentRegistry, buildFarewell, buildGreeting, buildHelp, buildOutOfDomainAnswer } from './intents/intent-registry';
 import { isFarewell, isGreeting, isHelp, tokenize } from './intents/nlp';
 import { AssistantContext, AssistantMessage, ChatRequest, ChatResponse, IntentResult, LOW_CONFIDENCE_THRESHOLD } from './intents/intent.types';
-import { RoleName } from '../../database/prisma-client';
 import { PrismaService } from '../../database/prisma.service';
 import { randomUUID } from 'node:crypto';
+import { GroqService } from '../ai/groq.service';
 
 @Injectable()
 export class AssistantService {
@@ -14,6 +14,7 @@ export class AssistantService {
   constructor(
     private readonly registry: IntentRegistry,
     private readonly prisma: PrismaService,
+    private readonly groq: GroqService,
   ) {}
 
   async chat(req: ChatRequest, user: { id: string; tenantId?: string | null; rol?: string; nombre?: string | undefined }): Promise<ChatResponse> {
@@ -61,7 +62,10 @@ export class AssistantService {
     // Detect intent
     const match = this.registry.detect(message);
     if (!match) {
-      const result = buildOutOfDomainAnswer(message, ctx);
+      const groqAnswer = await this.answerWithGroq(req, message, ctx, sessionId);
+      if (groqAnswer) return groqAnswer;
+
+      const result = buildOutOfDomainAnswer(message);
       return {
         sessionId,
         message: this.assistantMsgWithMeta(result, undefined, false, 'No entendí la pregunta o está fuera de mi dominio'),
@@ -69,6 +73,10 @@ export class AssistantService {
     }
 
     this.logger.debug(`Intent matched: ${match.intent} (confidence=${match.confidence.toFixed(2)})`);
+    if (match.confidence < LOW_CONFIDENCE_THRESHOLD) {
+      const groqAnswer = await this.answerWithGroq(req, message, ctx, sessionId);
+      if (groqAnswer) return groqAnswer;
+    }
 
     try {
       const result = await this.registry.handle(message, match, ctx);
@@ -113,9 +121,46 @@ export class AssistantService {
         where: { id: user.tenantId },
         select: { nombre: true, tipoNegocio: true },
       });
-      if (tenant) ctx.businessName = tenant.nombre;
+      if (tenant) {
+        ctx.businessName = tenant.nombre;
+        ctx.businessType = tenant.tipoNegocio;
+      }
     }
     return ctx;
+  }
+
+  private async answerWithGroq(
+    req: ChatRequest,
+    message: string,
+    ctx: AssistantContext,
+    sessionId: string,
+  ): Promise<ChatResponse | null> {
+    const result = await this.groq.answerSupport(
+      {
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        userRole: ctx.userRole,
+        businessName: ctx.businessName,
+        businessType: ctx.businessType,
+      },
+      message,
+      req.history ?? [],
+    );
+    if (!result) return null;
+
+    return {
+      sessionId,
+      message: this.assistantMsgWithMeta(
+        {
+          answer: result.answer,
+          suggestions: result.suggestions,
+        },
+        'support.groq',
+        true,
+        undefined,
+        LOW_CONFIDENCE_THRESHOLD,
+      ),
+    };
   }
 
   private assistantMsg(content: string, intent?: string, suggestions?: string[]): AssistantMessage {

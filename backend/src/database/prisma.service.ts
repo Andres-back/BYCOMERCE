@@ -21,6 +21,7 @@ const TENANT_MODELS = new Set<string>([
   'Order',
   'DeliveryConfig',
   'BusinessSettings',
+  'TenantAiSettings',
   'AuditLog',
   'RefreshToken',
   'Payment',

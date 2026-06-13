@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Post,
   UploadedFile,
@@ -26,8 +27,8 @@ export class UploadsController {
   signUpload() {
     return {
       message: 'POST /uploads/upload con FormData (campo file) para subir archivo',
-      allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
-      maxFileSize: '10MB',
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+      maxFileSize: '15MB',
     };
   }
 
@@ -36,12 +37,13 @@ export class UploadsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: 10 * 1024 * 1024 },
+      limits: { fileSize: 15 * 1024 * 1024 },
     }),
   )
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: RequestUser,
+    @Body('folder') folder?: string,
   ) {
     if (!file) {
       throw new BadRequestException('Archivo requerido (campo file)');
@@ -52,7 +54,7 @@ export class UploadsController {
     }
 
     this.uploadsService.validateFile(file.mimetype, file.size);
-    const key = this.uploadsService.generateKey(user.tenantId, 'products', file.originalname);
+    const key = this.uploadsService.generateKey(user.tenantId, folder || 'products', file.originalname);
     const result = await this.uploadsService.uploadBuffer(key, file.buffer, file.mimetype);
 
     return {
@@ -60,6 +62,7 @@ export class UploadsController {
       url: result.url,
       size: file.size,
       mimetype: file.mimetype,
+      originalName: file.originalname,
     };
   }
 }

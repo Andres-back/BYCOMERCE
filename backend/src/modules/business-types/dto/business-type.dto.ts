@@ -18,7 +18,7 @@ export class BusinessTypePreset {
   categorias: string[] = [];
 
   @IsObject()
-  config: Record<string, any> = {};
+  config: Record<string, unknown> = {};
 
   @IsArray()
   @IsString({ each: true })

@@ -5,10 +5,10 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { EstadoGeneral, InventoryMovementType, Prisma, RoleName } from '../../../database/prisma-client';
+import { EstadoGeneral, InventoryMovementType, Prisma, PurchasePaymentStatus, RoleName } from '../../../database/prisma-client';
 import { PrismaService } from '../../../database/prisma.service';
 import { RequestUser } from '../../../common/types/request-user';
-import { CreatePurchaseDto, PurchaseQueryDto } from '../dto/purchase.dto';
+import { CreatePurchaseDto, PurchaseQueryDto, UpdatePurchaseInvoiceDto } from '../dto/purchase.dto';
 import { CreateSupplierDto, SupplierQueryDto, UpdateSupplierDto } from '../dto/supplier.dto';
 
 @Injectable()
@@ -109,12 +109,15 @@ export class ProcurementService {
   listPurchases(user: RequestUser, query: PurchaseQueryDto) {
     const tenantId = this.requireTenant(user);
     const range = this.purchaseRange(query);
+    const and = this.purchaseAndFilters(query);
 
     return this.prisma.purchase.findMany({
       where: {
         tenantId,
         ...(query.supplierId ? { supplierId: query.supplierId } : {}),
+        ...(query.estadoPago ? { estadoPago: query.estadoPago } : {}),
         ...(range ? { fechaCompra: range } : {}),
+        ...(and.length > 0 ? { AND: and } : {}),
       },
       include: this.purchaseInclude,
       orderBy: { fechaCompra: 'desc' },
@@ -156,6 +159,14 @@ export class ProcurementService {
           numeroFactura: this.optionalString(dto.numeroFactura),
           total,
           fechaCompra,
+          fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : undefined,
+          estadoPago: dto.estadoPago ?? PurchasePaymentStatus.PENDIENTE,
+          facturaUrl: this.optionalString(dto.facturaUrl),
+          facturaKey: this.optionalString(dto.facturaKey),
+          facturaNombre: this.optionalString(dto.facturaNombre),
+          facturaMime: this.optionalString(dto.facturaMime),
+          facturaOcrTexto: this.optionalString(dto.facturaOcrTexto),
+          facturaOcrJson: dto.facturaOcrJson === undefined ? undefined : (dto.facturaOcrJson as Prisma.InputJsonValue),
           observaciones: this.optionalString(dto.observaciones),
           estado: EstadoGeneral.ACTIVO,
           items: {
@@ -300,6 +311,33 @@ export class ProcurementService {
     return cancelled;
   }
 
+  async updatePurchaseInvoice(user: RequestUser, id: string, dto: UpdatePurchaseInvoiceDto) {
+    const tenantId = this.requireTenant(user);
+    const current = await this.prisma.purchase.findFirst({
+      where: { id, tenantId },
+      include: this.purchaseInclude,
+    });
+    if (!current) throw new NotFoundException('Compra no encontrada');
+
+    const updated = await this.prisma.purchase.update({
+      where: { id },
+      data: {
+        fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : undefined,
+        estadoPago: dto.estadoPago,
+        facturaUrl: this.optionalString(dto.facturaUrl),
+        facturaKey: this.optionalString(dto.facturaKey),
+        facturaNombre: this.optionalString(dto.facturaNombre),
+        facturaMime: this.optionalString(dto.facturaMime),
+        facturaOcrTexto: this.optionalString(dto.facturaOcrTexto),
+        facturaOcrJson: dto.facturaOcrJson === undefined ? undefined : (dto.facturaOcrJson as Prisma.InputJsonValue),
+      },
+      include: this.purchaseInclude,
+    });
+
+    await this.audit(tenantId, user.id, 'PURCHASE_INVOICE_UPDATED', 'purchases', id, current, updated);
+    return updated;
+  }
+
   private ensureUniqueItems(dto: CreatePurchaseDto) {
     const productIds = new Set<string>();
     for (const item of dto.items) {
@@ -335,6 +373,26 @@ export class ProcurementService {
       ...(query.from ? { gte: this.startOfDay(new Date(query.from)) } : {}),
       ...(query.to ? { lte: this.endOfDay(new Date(query.to)) } : {}),
     };
+  }
+
+  private purchaseAndFilters(query: PurchaseQueryDto): Prisma.PurchaseWhereInput[] {
+    if (!query.due) return [];
+
+    const today = this.startOfDay(new Date());
+    const in7 = this.endOfDay(this.addDays(today, 7));
+    const in30 = this.endOfDay(this.addDays(today, 30));
+    const unpaid: Prisma.PurchaseWhereInput = { estadoPago: { not: PurchasePaymentStatus.PAGADA } };
+
+    if (query.due === 'withoutDue') return [{ fechaVencimiento: null }];
+    if (query.due === 'overdue') return [unpaid, { fechaVencimiento: { lt: today } }];
+    if (query.due === 'next7') return [unpaid, { fechaVencimiento: { gte: today, lte: in7 } }];
+    return [unpaid, { fechaVencimiento: { gte: today, lte: in30 } }];
+  }
+
+  private addDays(date: Date, days: number) {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
   }
 
   private startOfDay(date: Date) {

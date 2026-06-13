@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Eye, RefreshCw, Save, Palette, ImageIcon, Type, Sparkles, Trash2, Loader2, Bell,
+  Eye, RefreshCw, Save, Palette, ImageIcon, Sparkles, Loader2, Bell, BrainCircuit, KeyRound, WandSparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -25,13 +25,16 @@ import { cn } from '@/lib/utils';
 import { queryKeys } from '@/lib/query-keys';
 import {
   getBusinessProfile,
+  getTenantAiSettings,
   updateBusinessProfile,
+  updateTenantAiSettings,
+  suggestBrandingFromImage,
   listGallery,
   addGalleryImage,
   deleteGalleryImage,
 } from '@/services/tenant/tenant.service';
 import { useAuthStore } from '@/stores/auth-store';
-import { FadeIn, StaggerList } from '@/components/shared/fade-in';
+import { FadeIn } from '@/components/shared/fade-in';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { PageHeader } from '@/components/layouts/page-header';
 import { getPreferences, updatePreferences } from '@/services/notifications/notifications.service';
@@ -97,6 +100,19 @@ const appearanceSchema = z.object({
 });
 type AppearanceForm = z.infer<typeof appearanceSchema>;
 
+const aiSchema = z.object({
+  assistantEnabled: z.boolean(),
+  visionEnabled: z.boolean(),
+  visionProvider: z.enum(['OLLAMA', 'GROQ']),
+  groqApiKey: z.string().optional(),
+  clearGroqApiKey: z.boolean(),
+  groqModel: z.string().min(1),
+  groqVisionModel: z.string().min(1),
+  ollamaUrl: z.string().min(1),
+  ollamaVisionModel: z.string().min(1),
+});
+type AiForm = z.infer<typeof aiSchema>;
+
 const FONT_OPTIONS = ['Inter', 'Roboto', 'Poppins', 'Montserrat', 'Open Sans', 'Lato'] as const;
 
 const PRESET_PALETTES = [
@@ -121,7 +137,7 @@ const RADIO_OPTIONS = [
 export default function SettingsClient() {
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
-  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryUrls, setGalleryUrls] = useState<string[] | null>(null);
 
   const { data: business, isLoading } = useQuery({
     queryKey: queryKeys.tenant.profile,
@@ -135,14 +151,19 @@ export default function SettingsClient() {
     enabled: !!token,
   });
 
-  useEffect(() => {
-    if (gallery) setGalleryUrls(gallery.map((g) => g.url));
-  }, [gallery]);
+  const { data: aiSettings, isLoading: aiLoading } = useQuery({
+    queryKey: queryKeys.tenant.aiSettings,
+    queryFn: () => getTenantAiSettings(token!),
+    enabled: !!token,
+  });
+
+  const galleryServerUrls = useMemo(() => (gallery ?? []).map((g) => g.url), [gallery]);
 
   const infoForm = useForm<InfoForm>({
     resolver: zodResolver(infoSchema),
     defaultValues: { nombre: '', tipoNegocio: '', eslogan: '', textoBienvenida: '', direccion: '', barrio: '' },
   });
+  const infoPreview = useWatch({ control: infoForm.control });
 
   const contactForm = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
@@ -153,6 +174,7 @@ export default function SettingsClient() {
     resolver: zodResolver(deliverySchema),
     defaultValues: { deliveryActivo: false, deliveryCostoBase: 0, deliveryRadioKm: 0, deliveryHorarioInicio: '', deliveryHorarioFin: '' },
   });
+  const deliveryActive = useWatch({ control: deliveryForm.control, name: 'deliveryActivo' });
 
   const socialForm = useForm<SocialForm>({
     resolver: zodResolver(socialSchema),
@@ -174,6 +196,25 @@ export default function SettingsClient() {
       mostrarStock: true,
     },
   });
+
+  const aiForm = useForm<AiForm>({
+    resolver: zodResolver(aiSchema),
+    defaultValues: {
+      assistantEnabled: false,
+      visionEnabled: false,
+      visionProvider: 'OLLAMA',
+      groqApiKey: '',
+      clearGroqApiKey: false,
+      groqModel: 'llama-3.3-70b-versatile',
+      groqVisionModel: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      ollamaUrl: 'http://localhost:11434',
+      ollamaVisionModel: 'llava:latest',
+    },
+  });
+  const aiAssistantEnabled = useWatch({ control: aiForm.control, name: 'assistantEnabled' });
+  const aiVisionEnabled = useWatch({ control: aiForm.control, name: 'visionEnabled' });
+  const aiVisionProvider = useWatch({ control: aiForm.control, name: 'visionProvider' });
+  const aiClearGroqApiKey = useWatch({ control: aiForm.control, name: 'clearGroqApiKey' });
 
   useEffect(() => {
     if (!business) return;
@@ -216,7 +257,22 @@ export default function SettingsClient() {
       mostrarPrecios: business.businessSettings?.mostrarPrecios ?? true,
       mostrarStock: business.businessSettings?.mostrarStock ?? true,
     });
-  }, [business]);
+  }, [appearanceForm, business, contactForm, deliveryForm, infoForm, socialForm]);
+
+  useEffect(() => {
+    if (!aiSettings) return;
+    aiForm.reset({
+      assistantEnabled: aiSettings.assistantEnabled,
+      visionEnabled: aiSettings.visionEnabled,
+      visionProvider: aiSettings.visionProvider,
+      groqApiKey: '',
+      clearGroqApiKey: false,
+      groqModel: aiSettings.groqModel,
+      groqVisionModel: aiSettings.groqVisionModel,
+      ollamaUrl: aiSettings.ollamaUrl,
+      ollamaVisionModel: aiSettings.ollamaVisionModel,
+    });
+  }, [aiSettings, aiForm]);
 
   const saveMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => updateBusinessProfile(token!, data),
@@ -225,6 +281,42 @@ export default function SettingsClient() {
       toast.success('Configuración guardada');
     },
     onError: (e: Error) => toast.error(e.message || 'Error al guardar'),
+  });
+
+  const aiMutation = useMutation({
+    mutationFn: (data: AiForm) =>
+      updateTenantAiSettings(token!, {
+        assistantEnabled: data.assistantEnabled,
+        visionEnabled: data.visionEnabled,
+        visionProvider: data.visionProvider,
+        groqApiKey: data.groqApiKey?.trim() || undefined,
+        clearGroqApiKey: data.clearGroqApiKey,
+        groqModel: data.groqModel,
+        groqVisionModel: data.groqVisionModel,
+        ollamaUrl: data.ollamaUrl,
+        ollamaVisionModel: data.ollamaVisionModel,
+      }),
+    onSuccess: (updated) => {
+      qc.setQueryData(queryKeys.tenant.aiSettings, updated);
+      aiForm.setValue('groqApiKey', '');
+      aiForm.setValue('clearGroqApiKey', false);
+      toast.success('Configuracion IA guardada');
+    },
+    onError: (e: Error) => toast.error(e.message || 'Error al guardar IA'),
+  });
+
+  const brandingSuggestionMutation = useMutation({
+    mutationFn: (input: { fileBase64: string; mimeType: string; fileName?: string; tipoNegocio?: string }) =>
+      suggestBrandingFromImage(token!, input),
+    onSuccess: (result) => {
+      const applied = result.applied;
+      if (applied?.colorPrimario) appearanceForm.setValue('colorPrimario', applied.colorPrimario);
+      if (applied?.colorSecundario) appearanceForm.setValue('colorSecundario', applied.colorSecundario);
+      if (applied?.colorAcento) appearanceForm.setValue('colorAcento', applied.colorAcento);
+      qc.invalidateQueries({ queryKey: queryKeys.tenant.profile });
+      toast.success(applied ? 'Paleta IA aplicada' : 'La IA no encontro colores aplicables');
+    },
+    onError: (e: Error) => toast.error(e.message || 'No fue posible analizar la imagen'),
   });
 
   const addImageMutation = useMutation({
@@ -247,12 +339,6 @@ export default function SettingsClient() {
 
   const [prefState, setPrefState] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    if (preferences) {
-      setPrefState(Object.fromEntries(preferences.map((p) => [p.tipo, p.activo])));
-    }
-  }, [preferences]);
-
   const updatePrefsMutation = useMutation({
     mutationFn: (preferencias: { tipo: string; canal: string; activo: boolean }[]) =>
       updatePreferences(token!, { preferencias }),
@@ -264,15 +350,15 @@ export default function SettingsClient() {
   });
 
   function onNotificationsSave() {
-    const preferencias = Object.entries(prefState).map(([tipo, activo]) => ({
-      tipo,
+    const preferencias = (preferences ?? []).map((pref) => ({
+      tipo: pref.tipo,
       canal: 'in-app',
-      activo,
+      activo: prefState[pref.tipo] ?? pref.activo,
     }));
     updatePrefsMutation.mutate(preferencias);
   }
 
-  const appearance = appearanceForm.watch();
+  const appearance = useWatch({ control: appearanceForm.control });
   const livePalette = useMemo(
     () => ({
       primario: appearance.colorPrimario || '#0d9488',
@@ -307,6 +393,38 @@ export default function SettingsClient() {
       radioTarjeta: data.radioTarjeta,
       mostrarPrecios: data.mostrarPrecios,
       mostrarStock: data.mostrarStock,
+    });
+  }
+
+  function onAiSave(data: AiForm) {
+    aiMutation.mutate(data);
+  }
+
+  async function onBrandingFile(file?: File) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se pueden analizar imagenes');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Imagen demasiado grande (max 10MB)');
+      return;
+    }
+    const fileBase64 = await fileToBase64(file);
+    brandingSuggestionMutation.mutate({
+      fileBase64,
+      mimeType: file.type,
+      fileName: file.name,
+      tipoNegocio: infoForm.getValues('tipoNegocio') || business?.tipoNegocio,
+    });
+  }
+
+  function fileToBase64(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
     });
   }
 
@@ -355,6 +473,9 @@ export default function SettingsClient() {
               <TabsTrigger value="social">Redes</TabsTrigger>
               <TabsTrigger value="notifications">
                 <Bell className="mr-1 size-3.5" /> Notificaciones
+              </TabsTrigger>
+              <TabsTrigger value="ai">
+                <BrainCircuit className="mr-1 size-3.5" /> IA
               </TabsTrigger>
               <TabsTrigger value="delivery">Delivery</TabsTrigger>
             </TabsList>
@@ -652,7 +773,7 @@ export default function SettingsClient() {
                     <Skeleton className="h-48 w-full" />
                   ) : (
                     <MultiImageUploader
-                      value={galleryUrls}
+                      value={galleryUrls ?? galleryServerUrls}
                       onChange={onGalleryChange}
                       folder="gallery"
                     />
@@ -711,13 +832,133 @@ export default function SettingsClient() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="ai" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BrainCircuit className="size-4" /> Asistente y vision IA
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {aiLoading ? (
+                    <Skeleton className="h-72 w-full" />
+                  ) : (
+                    <form onSubmit={aiForm.handleSubmit(onAiSave)} className="space-y-5">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                          <div>
+                            <Label className="text-sm">Asistente IA</Label>
+                            <p className="text-xs text-muted-foreground">Responde soporte sobre uso del sistema con Groq.</p>
+                          </div>
+                          <Switch
+                            checked={aiAssistantEnabled}
+                            onCheckedChange={(v: boolean) => aiForm.setValue('assistantEnabled', v)}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                          <div>
+                            <Label className="text-sm">Vision IA</Label>
+                            <p className="text-xs text-muted-foreground">Extrae facturas, comprobantes y paletas.</p>
+                          </div>
+                          <Switch
+                            checked={aiVisionEnabled}
+                            onCheckedChange={(v: boolean) => aiForm.setValue('visionEnabled', v)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label>Proveedor de vision</Label>
+                          <Select
+                            value={aiVisionProvider}
+                            onValueChange={(v) => aiForm.setValue('visionProvider', v as AiForm['visionProvider'])}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="OLLAMA">Ollama local</SelectItem>
+                              <SelectItem value="GROQ">Groq Cloud</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label>URL Ollama</Label>
+                          <Input placeholder="http://localhost:11434" {...aiForm.register('ollamaUrl')} />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label>Modelo Groq soporte</Label>
+                          <Input {...aiForm.register('groqModel')} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Modelo Groq vision</Label>
+                          <Input {...aiForm.register('groqVisionModel')} />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label>Modelo Ollama vision</Label>
+                          <Input placeholder="llava:latest" {...aiForm.register('ollamaVisionModel')} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="flex items-center gap-1">
+                            <KeyRound className="size-3.5" /> Groq API key
+                          </Label>
+                          <Input type="password" autoComplete="off" placeholder={aiSettings?.hasGroqApiKey ? 'Clave guardada' : 'gsk_...'} {...aiForm.register('groqApiKey')} />
+                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              checked={aiClearGroqApiKey}
+                              onChange={(e) => aiForm.setValue('clearGroqApiKey', e.target.checked)}
+                            />
+                            Eliminar clave guardada
+                          </label>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="rounded-lg border p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <Label className="flex items-center gap-2 text-sm">
+                              <WandSparkles className="size-4" /> Paleta desde logo o banner
+                            </Label>
+                            <p className="text-xs text-muted-foreground">Sube una imagen y la IA aplicara colores premium al branding.</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              className="max-w-[240px]"
+                              disabled={brandingSuggestionMutation.isPending}
+                              onChange={(e) => void onBrandingFile(e.target.files?.[0])}
+                            />
+                            {brandingSuggestionMutation.isPending && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button type="submit" disabled={aiMutation.isPending}>
+                        {aiMutation.isPending ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
+                        Guardar IA
+                      </Button>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="delivery" className="mt-4">
               <Card>
                 <CardHeader><CardTitle>Configuración de delivery</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={deliveryForm.handleSubmit(onDeliverySave)} className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <Switch checked={deliveryForm.watch('deliveryActivo')} onCheckedChange={(v: boolean) => deliveryForm.setValue('deliveryActivo', v)} />
+                      <Switch checked={deliveryActive} onCheckedChange={(v: boolean) => deliveryForm.setValue('deliveryActivo', v)} />
                       <Label>Delivery activo</Label>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -801,20 +1042,20 @@ export default function SettingsClient() {
                       className={cn('flex size-12 items-center justify-center text-sm font-bold text-white', livePalette.radio)}
                       style={{ background: livePalette.primario }}
                     >
-                      {(infoForm.watch('nombre') || business?.nombre || 'N').slice(0, 2).toUpperCase()}
+                      {(infoPreview.nombre || business?.nombre || 'N').slice(0, 2).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <h2 className="truncate text-base font-bold" style={{ fontFamily: livePalette.fuente, color: livePalette.primario }}>
-                      {infoForm.watch('nombre') || business?.nombre || 'Nombre del negocio'}
+                      {infoPreview.nombre || business?.nombre || 'Nombre del negocio'}
                     </h2>
-                    {infoForm.watch('eslogan') && (
-                      <p className="truncate text-xs italic text-muted-foreground">{infoForm.watch('eslogan')}</p>
+                    {infoPreview.eslogan && (
+                      <p className="truncate text-xs italic text-muted-foreground">{infoPreview.eslogan}</p>
                     )}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {infoForm.watch('tipoNegocio') || 'Tipo'} · {infoForm.watch('barrio') || 'Barrio'}
+                  {infoPreview.tipoNegocio || 'Tipo'} · {infoPreview.barrio || 'Barrio'}
                 </p>
                 <Separator />
                 <div className="space-y-1 text-xs">
