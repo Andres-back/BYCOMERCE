@@ -1,9 +1,9 @@
 'use client';
 
 import {
-  ArrowRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, Coffee,
+  ArrowRight, Building2, CheckCircle2, ChevronLeft, ChevronRight,
   Dumbbell, Flame, Hammer, Heart, MapPin, Package, Search, ShieldCheck,
-  ShoppingBag, Sparkles, Store, Tag, Truck, UtensilsCrossed, X, Filter,
+  ShoppingBag, Store, Tag, Truck, UtensilsCrossed, X, Filter,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -87,7 +87,6 @@ function initials(name: string) {
 export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceClientProps) {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
-  const [activeTab, setActiveTab] = useState<'comercios' | 'ofertas' | 'novedades'>('comercios');
   const [location, setLocation] = useState('Todas');
   const [category, setCategory] = useState('Todas');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -156,14 +155,76 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
   const productRef = useGsapStagger<HTMLDivElement>(promoProducts.length, { stagger: 0.05 });
 
   const filterPanel = (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+    <div className="space-y-5 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-black text-foreground">Filtros</h3>
+        <h3 className="text-sm font-black text-foreground">Explorar</h3>
         <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-xs">
           <X className="mr-1 size-3.5" />
           Limpiar
         </Button>
       </div>
+
+      <nav className="space-y-1.5">
+        {[
+          { id: 'Todos', label: 'Todos los comercios', icon: Store, count: businesses.length },
+          { id: 'destacados', label: 'Productos destacados', icon: Heart, count: businesses.filter((business) => (business._count?.products ?? 0) > 0).length },
+          { id: 'domicilio', label: 'Con domicilio', icon: Truck, count: metrics.delivery },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => {
+              setActiveCategory(item.id);
+              setSidebarOpen(false);
+            }}
+            className={cn(
+              'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-bold transition-colors',
+              activeCategory === item.id ? 'bg-teal-50 text-teal-800 dark:bg-teal-950/40 dark:text-teal-200' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <item.icon className="size-4 shrink-0" />
+              <span className="truncate">{item.label}</span>
+            </span>
+            <Badge variant="secondary" className="rounded-full px-2 text-xs">{item.count}</Badge>
+          </button>
+        ))}
+      </nav>
+
+      <div className="border-t border-border" />
+
+      <div>
+        <h4 className="mb-2 text-xs font-black uppercase tracking-wide text-muted-foreground">Categorias</h4>
+        <nav className="space-y-1.5">
+          {CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const count = categoryCounts[cat.id] ?? 0;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(activeCategory === cat.id ? 'Todos' : cat.id);
+                  setSidebarOpen(false);
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-bold transition-colors',
+                  activeCategory === cat.id ? 'bg-teal-50 text-teal-800 dark:bg-teal-950/40 dark:text-teal-200' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <Icon className="size-4 shrink-0" />
+                  <span className="truncate">{cat.label}</span>
+                </span>
+                <Badge variant="secondary" className="rounded-full px-2 text-xs">{count}</Badge>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="border-t border-border" />
+
       <div className="grid gap-3">
         <Select value={location} onValueChange={(value) => setLocation(value ?? 'Todas')}>
           <SelectTrigger className="h-10 border-border bg-background">
@@ -183,28 +244,6 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
             {businessTypes.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}
           </SelectContent>
         </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveCategory('destacados')}
-          className={cn(
-            'rounded-lg border px-3 py-2 text-left text-xs font-bold transition-colors',
-            activeCategory === 'destacados' ? 'border-teal-600 bg-teal-50 text-teal-800 dark:bg-teal-950/40 dark:text-teal-200' : 'border-border hover:bg-muted',
-          )}
-        >
-          Destacados
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveCategory('domicilio')}
-          className={cn(
-            'rounded-lg border px-3 py-2 text-left text-xs font-bold transition-colors',
-            activeCategory === 'domicilio' ? 'border-teal-600 bg-teal-50 text-teal-800 dark:bg-teal-950/40 dark:text-teal-200' : 'border-border hover:bg-muted',
-          )}
-        >
-          Domicilio
-        </button>
       </div>
     </div>
   );
@@ -281,7 +320,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 <div className="rounded-xl border border-border bg-muted/40 p-4">
                   <p className="text-xs font-black uppercase tracking-wide text-teal-700 dark:text-teal-300">Unete a Mocoa Market</p>
                   <p className="mt-1 text-sm text-muted-foreground">{metrics.businesses} comercios activos · {metrics.products} productos</p>
-                  <Link href="/auth/register" className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-amber-500">
+                  <Link href="/auth/login" className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-amber-500">
                     Publicar comercio <ArrowRight className="size-4" />
                   </Link>
                 </div>
@@ -318,7 +357,6 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 </div>
               ))}
             </div>
-            {filterPanel}
           </aside>
         </div>
 
@@ -334,7 +372,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
               </button>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" ref={productRef}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" ref={productRef}>
             {promoProducts.slice(0, 3).map((product, index) => (
               <Link key={`${product.id}-${index}`} href={`/negocio/${product.tenant?.slug ?? ''}`} className="group rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-black text-foreground">{index === 0 ? 'Novedades' : index === 1 ? 'En oferta' : 'Recomendado'}</p>
@@ -350,51 +388,21 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 <p className="mt-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">Disponible</p>
               </Link>
             ))}
-            {[
-              { title: 'Comercios', copy: 'Explora tiendas locales.', icon: Store, action: 'Ver comercios' },
-              { title: 'Ofertas', copy: 'Productos destacados hoy.', icon: Tag, action: 'Ver ofertas' },
-              { title: 'Novedades', copy: 'Lo mas reciente del marketplace.', icon: Sparkles, action: 'Explorar' },
-            ].map((item) => (
-              <button key={item.title} type="button" onClick={() => setActiveTab(item.title.toLowerCase() as 'comercios' | 'ofertas' | 'novedades')} className="rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-black text-foreground">{item.title}</p>
-                <div className="mx-auto mt-5 flex size-16 items-center justify-center rounded-full bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-200">
-                  <item.icon className="size-7" />
-                </div>
-                <p className="mt-5 min-h-[36px] text-center text-sm text-muted-foreground">{item.copy}</p>
-                <span className="mt-5 flex h-9 items-center justify-center rounded-lg border border-teal-700 text-sm font-bold text-teal-700 dark:border-teal-500 dark:text-teal-200">
-                  {item.action}
-                </span>
-              </button>
-            ))}
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
+        <section className="mt-8 grid gap-5 xl:grid-cols-[290px_minmax(0,1fr)_330px]">
+          <aside className="hidden xl:block xl:sticky xl:top-24 xl:self-start">
+            {filterPanel}
+          </aside>
+
           <div className="min-w-0">
             <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="flex gap-5 border-b border-border">
-                  {[
-                    { id: 'comercios', label: 'Comercios' },
-                    { id: 'ofertas', label: 'Ofertas' },
-                    { id: 'novedades', label: 'Novedades' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveTab(tab.id as 'comercios' | 'ofertas' | 'novedades')}
-                      className={cn(
-                        '-mb-px border-b-2 px-1 pb-3 text-sm font-black transition-colors',
-                        activeTab === tab.id ? 'border-amber-400 text-teal-800 dark:text-teal-300' : 'border-transparent text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">{filteredBusinesses.length} comercios encontrados</p>
+                <h2 className="text-2xl font-black text-foreground">Comercios</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{filteredBusinesses.length} comercios encontrados</p>
               </div>
-              <div className="lg:hidden">
+              <div className="xl:hidden">
                 <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                   <SheetTrigger render={<Button variant="outline" className="w-full">
                     <Filter className="mr-2 size-4" /> Filtros
@@ -404,40 +412,6 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                   </SheetContent>
                 </Sheet>
               </div>
-            </div>
-
-            <div className="mb-5 flex gap-2 overflow-x-auto pb-2">
-              <button
-                type="button"
-                onClick={() => setActiveCategory('Todos')}
-                className={cn(
-                  'shrink-0 rounded-full border px-4 py-2 text-sm font-black transition-colors',
-                  activeCategory === 'Todos' ? 'border-teal-700 bg-teal-700 text-white' : 'border-border bg-card text-muted-foreground hover:text-foreground',
-                )}
-              >
-                Todos
-              </button>
-              {CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                const count = categoryCounts[cat.id] ?? 0;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setActiveCategory(activeCategory === cat.id ? 'Todos' : cat.id)}
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition-colors',
-                      activeCategory === cat.id ? 'border-teal-700 bg-teal-700 text-white' : 'border-border bg-card text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    <Icon className="size-4" />
-                    {cat.label}
-                    <span className={cn('rounded-full px-2 py-0.5 text-xs', activeCategory === cat.id ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground')}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
             </div>
 
             {filteredBusinesses.length === 0 ? (
@@ -541,7 +515,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="text-base font-black">Tienes un comercio?</h3>
               <p className="mt-2 text-sm text-muted-foreground">Publica tu catalogo, controla inventario y recibe pedidos por WhatsApp.</p>
-              <Link href="/auth/register" className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-black text-white hover:bg-teal-800">
+              <Link href="/auth/login" className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-black text-white hover:bg-teal-800">
                 Empezar <ArrowRight className="ml-2 size-4" />
               </Link>
             </div>

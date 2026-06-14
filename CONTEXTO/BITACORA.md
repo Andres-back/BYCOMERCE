@@ -1007,6 +1007,22 @@ Se tomo como referencia publica `https://daimuz.alexsters.works/`: marketplace c
 - El warning de Next sobre `middleware` deprecado a `proxy` sigue pendiente.
 - El push a GitHub depende de credenciales locales disponibles en la maquina.
 
+### Ajuste posterior
+
+- Se corrigieron CTAs rotos `Publicar comercio` y `Empezar`: ya no apuntan a `/auth/register` porque esa ruta no existe; ahora apuntan a `/auth/login`.
+- Se eliminaron las cards no funcionales de `Comercios`, `Ofertas` y `Novedades` del bloque "Para ti".
+- Se recupero el filtrado lateral tipo directorio:
+  - `Todos los comercios`.
+  - `Productos destacados`.
+  - `Con domicilio`.
+  - categorias con conteos.
+  - filtros de barrio/tipo de negocio.
+- Validacion:
+  - `/marketplace`: 200.
+  - `/auth/login`: 200.
+  - assets `_next/static`: 26/26 OK.
+  - navegador desktop: lateral visible con filtros principales.
+
 ---
 
 ## 2026-06-13 - Compras: facturas, vencimientos y OCR con Ollama
