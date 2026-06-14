@@ -1023,6 +1023,37 @@ Se tomo como referencia publica `https://daimuz.alexsters.works/`: marketplace c
   - assets `_next/static`: 26/26 OK.
   - navegador desktop: lateral visible con filtros principales.
 
+### Ajuste UX marketplace y pedidos
+
+- Se agrego una card en el espacio vacio del bloque "Para ti":
+  - explica flujo `carrito -> identificacion -> domicilio/recogida`.
+  - refuerza confianza contra pedidos falsos.
+  - enlaza a la seccion de comercios.
+- La navbar publica ahora navega a secciones reales:
+  - `Comercios` -> `#comercios`.
+  - `Productos` -> `#para-ti`.
+  - `Domicilios` -> `#domicilios`.
+- Los CTAs para publicar comercio ahora abren WhatsApp del super admin `3124354040`:
+  - mensaje precargado para solicitar creacion de cuenta de comercio.
+- Checkout publico:
+  - mantiene creacion de pedido solo al final, cuando ya hay carrito.
+  - muestra aviso de identificacion del cliente.
+  - refuerza validacion de telefono en frontend.
+  - backend ahora valida formato basico de telefono en `CreateOrderDto`.
+- Referencias observadas y aplicadas:
+  - Uber Eats: busqueda/direccion y alta de restaurante.
+  - Rappi: separacion de restaurante/comercio/repartidor, categorias y ofertas.
+  - Mercado Libre: busqueda, categorias, cuenta/carrito y confianza para comprar/vender.
+- Validacion:
+  - `/`: 200.
+  - `/marketplace`: 200.
+  - `/negocio/alfa-mocoa`: 200.
+  - assets `_next/static`: 26/26 OK.
+  - `npm run build --workspace frontend`: OK.
+  - `npm run typecheck --workspace frontend`: OK.
+  - `npm run typecheck --workspace backend`: OK.
+  - `npm run test --workspace backend -- --runInBand`: OK.
+
 ---
 
 ## 2026-06-13 - Compras: facturas, vencimientos y OCR con Ollama

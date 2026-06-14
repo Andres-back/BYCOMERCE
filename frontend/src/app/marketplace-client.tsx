@@ -3,7 +3,7 @@
 import {
   ArrowRight, Building2, CheckCircle2, ChevronLeft, ChevronRight,
   Dumbbell, Flame, Hammer, Heart, MapPin, Package, Search, ShieldCheck,
-  ShoppingBag, Store, Tag, Truck, UtensilsCrossed, X, Filter,
+  ShoppingBag, ShoppingCart, Store, Tag, Truck, UtensilsCrossed, X, Filter,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -52,6 +52,10 @@ const PRODUCT_IMAGES: Record<string, string> = {
   'Limonada Natural': 'https://images.unsplash.com/photo-1437418747212-8d9709afab22?w=700&q=80',
   'Arroz Premium 1kg': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=700&q=80',
 };
+
+const SUPER_ADMIN_WHATSAPP_URL = `https://wa.me/573124354040?text=${encodeURIComponent(
+  'Hola, quiero publicar mi comercio en Mocoa Market y necesito que me creen la cuenta.',
+)}`;
 
 function businessMatchesCategory(business: Business, categoryId: string) {
   if (categoryId === 'Todos') return true;
@@ -250,7 +254,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
 
   return (
     <main className="bg-[#f6f8f7] text-foreground dark:bg-background">
-      <section className="mx-auto max-w-[1520px] px-4 py-5 sm:px-6 lg:px-8">
+      <section id="inicio" className="mx-auto max-w-[1520px] px-4 py-5 sm:px-6 lg:px-8">
         <div ref={heroRef} className="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_370px]">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <div className="grid min-h-[320px] lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -320,9 +324,9 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 <div className="rounded-xl border border-border bg-muted/40 p-4">
                   <p className="text-xs font-black uppercase tracking-wide text-teal-700 dark:text-teal-300">Unete a Mocoa Market</p>
                   <p className="mt-1 text-sm text-muted-foreground">{metrics.businesses} comercios activos · {metrics.products} productos</p>
-                  <Link href="/auth/login" className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-amber-500">
+                  <a href={SUPER_ADMIN_WHATSAPP_URL} target="_blank" rel="noreferrer" className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-amber-500">
                     Publicar comercio <ArrowRight className="size-4" />
-                  </Link>
+                  </a>
                 </div>
                 {leadProduct && (
                   <Link href={`/negocio/${leadProduct.tenant?.slug ?? ''}`} className="group relative min-h-[190px] overflow-hidden rounded-xl bg-slate-900 text-white">
@@ -360,7 +364,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
           </aside>
         </div>
 
-        <section className="mt-5">
+        <section id="para-ti" className="mt-5 scroll-mt-24">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-black uppercase tracking-wide text-teal-800 dark:text-teal-300">Para ti</h2>
             <div className="hidden gap-2 md:flex">
@@ -388,10 +392,38 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 <p className="mt-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">Disponible</p>
               </Link>
             ))}
+            <div id="domicilios" className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-900 to-slate-950 p-5 text-white shadow-sm dark:border-teal-900">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-amber-300">Compra protegida</p>
+                  <h3 className="mt-2 text-lg font-black leading-tight">Pide sin llamadas falsas</h3>
+                </div>
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/12">
+                  <ShieldCheck className="size-6 text-teal-200" />
+                </div>
+              </div>
+              <div className="mt-5 space-y-3 text-sm text-white/82">
+                <div className="flex gap-3">
+                  <ShoppingCart className="mt-0.5 size-4 shrink-0 text-amber-300" />
+                  <span>Arma el carrito en la tienda del comercio.</span>
+                </div>
+                <div className="flex gap-3">
+                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-amber-300" />
+                  <span>Antes de enviarlo te pedimos nombre, telefono y direccion.</span>
+                </div>
+                <div className="flex gap-3">
+                  <Truck className="mt-0.5 size-4 shrink-0 text-amber-300" />
+                  <span>El comercio confirma y coordina domicilio o recogida.</span>
+                </div>
+              </div>
+              <a href="#comercios" className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-black text-teal-900 hover:bg-teal-50">
+                Buscar comercios <ArrowRight className="ml-2 size-4" />
+              </a>
+            </div>
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 xl:grid-cols-[290px_minmax(0,1fr)_330px]">
+        <section id="comercios" className="mt-8 grid scroll-mt-24 gap-5 xl:grid-cols-[290px_minmax(0,1fr)_330px]">
           <aside className="hidden xl:block xl:sticky xl:top-24 xl:self-start">
             {filterPanel}
           </aside>
@@ -515,9 +547,9 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="text-base font-black">Tienes un comercio?</h3>
               <p className="mt-2 text-sm text-muted-foreground">Publica tu catalogo, controla inventario y recibe pedidos por WhatsApp.</p>
-              <Link href="/auth/login" className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-black text-white hover:bg-teal-800">
+              <a href={SUPER_ADMIN_WHATSAPP_URL} target="_blank" rel="noreferrer" className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-black text-white hover:bg-teal-800">
                 Empezar <ArrowRight className="ml-2 size-4" />
-              </Link>
+              </a>
             </div>
           </aside>
         </section>

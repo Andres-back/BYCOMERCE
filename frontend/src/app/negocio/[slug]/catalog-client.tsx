@@ -41,7 +41,9 @@ interface CartItem {
 
 const checkoutSchema = z.object({
   customerName: z.string().min(2, 'Ingresa tu nombre'),
-  customerPhone: z.string().min(6, 'Ingresa tu telefono'),
+  customerPhone: z.string()
+    .min(7, 'Ingresa un telefono valido')
+    .refine((value) => value.replace(/\D/g, '').length >= 10, 'Ingresa un telefono con al menos 10 digitos'),
   direccion: z.string().min(5, 'Ingresa tu direccion'),
   observaciones: z.string().optional(),
 });
@@ -372,23 +374,27 @@ export function CatalogClient({
                   )}
 
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                      <p className="font-bold">Identificacion del cliente</p>
+                      <p className="mt-1">Para evitar pedidos falsos, confirma tus datos solo cuando el carrito este listo.</p>
+                    </div>
                     <div className="space-y-1">
                       <Label htmlFor="customerName">Nombre</Label>
-                      <Input id="customerName" {...form.register('customerName')} />
+                      <Input id="customerName" autoComplete="name" {...form.register('customerName')} />
                       {form.formState.errors.customerName && (
                         <p className="text-xs text-destructive">{form.formState.errors.customerName.message}</p>
                       )}
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="customerPhone">Telefono</Label>
-                      <Input id="customerPhone" {...form.register('customerPhone')} />
+                      <Input id="customerPhone" type="tel" inputMode="tel" autoComplete="tel" placeholder="300 000 0000" {...form.register('customerPhone')} />
                       {form.formState.errors.customerPhone && (
                         <p className="text-xs text-destructive">{form.formState.errors.customerPhone.message}</p>
                       )}
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="direccion">Direccion</Label>
-                      <Input id="direccion" {...form.register('direccion')} />
+                      <Input id="direccion" autoComplete="street-address" {...form.register('direccion')} />
                       {form.formState.errors.direccion && (
                         <p className="text-xs text-destructive">{form.formState.errors.direccion.message}</p>
                       )}
@@ -497,10 +503,15 @@ export function CatalogClient({
           {items.length > 0 && (
             <div className="border-t p-4">
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p className="font-bold">Identificacion del cliente</p>
+                  <p className="mt-1">Tus datos se piden al final para que el comercio pueda validar el pedido.</p>
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="mobile-customerName" className="text-sm">Nombre</Label>
                   <Input
                     id="mobile-customerName"
+                    autoComplete="name"
                     {...form.register('customerName')}
                     placeholder="Tu nombre"
                   />
@@ -512,8 +523,11 @@ export function CatalogClient({
                   <Label htmlFor="mobile-customerPhone" className="text-sm">Telefono</Label>
                   <Input
                     id="mobile-customerPhone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     {...form.register('customerPhone')}
-                    placeholder="Tu telefono"
+                    placeholder="300 000 0000"
                   />
                   {form.formState.errors.customerPhone && (
                     <p className="text-xs text-destructive">{form.formState.errors.customerPhone.message}</p>
@@ -523,6 +537,7 @@ export function CatalogClient({
                   <Label htmlFor="mobile-direccion" className="text-sm">Direccion</Label>
                   <Input
                     id="mobile-direccion"
+                    autoComplete="street-address"
                     {...form.register('direccion')}
                     placeholder="Tu direccion"
                   />

@@ -7,6 +7,8 @@ import {
   IsLatitude,
   IsLongitude,
   IsOptional,
+  Matches,
+  MinLength,
   IsString,
   IsUUID,
   MaxLength,
@@ -38,6 +40,8 @@ export class CreateOrderDto {
   customerName!: string;
 
   @IsString()
+  @MinLength(7)
+  @Matches(/^[0-9+\s()-]+$/)
   @MaxLength(40)
   customerPhone!: string;
 

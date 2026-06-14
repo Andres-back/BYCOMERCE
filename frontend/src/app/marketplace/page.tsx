@@ -23,11 +23,11 @@ export default async function MarketplacePage() {
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
-            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-black text-teal-700 dark:text-teal-300">
+            <Link href="/marketplace#comercios" className="flex items-center gap-2 text-sm font-black text-teal-700 dark:text-teal-300">
               <ShoppingBag className="size-4" />
               Comercios
             </Link>
-            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
+            <Link href="/marketplace#domicilios" className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-teal-700 dark:text-slate-200 dark:hover:text-teal-300">
               <Truck className="size-4" />
               Domicilios
             </Link>
