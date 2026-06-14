@@ -902,6 +902,74 @@ Se reviso el cerebro/Obsidian y se continuo sobre el MVP multi-tenant. El foco d
 
 ---
 
+## 2026-06-14 - Superadmin, assets Next, uploads, marketplace premium y hardening MVP
+
+### Contexto
+
+Se continuo el MVP multi-tenant tipo Mercado Libre/Rappi local: cada comercio administra inventario, publica su catalogo, vende por WhatsApp/web, registra ventas fisicas en POS y controla compras/proveedores. La prioridad fue reparar CSS/chunks 500, corregir edicion de planes desde superadmin, mejorar carga de imagenes de productos, endurecer seguridad y validar Docker/tests.
+
+### Cambios
+
+Backend:
+
+- `SuperadminService.updatePlan` ahora devuelve `409 Conflict` si se intenta renombrar un plan a un nombre existente, evitando el 500 reportado en `/admin/superadmin/plans`.
+- `npm start --workspace backend` corregido para arrancar `dist/src/main.js`.
+- Uploads endurecidos:
+  - validacion por mimetype permitido y firma/magic bytes para JPG, PNG, WebP y PDF.
+  - extension generada por el servidor segun mimetype, no por nombre original.
+  - PDF servido como attachment.
+- Asistente IA:
+  - umbral de confianza subido a `0.55`.
+  - tokenizador NLP reconstruido sin mojibake y con normalizacion robusta de acentos.
+- Tests unitarios agregados para planes, uploads y NLP.
+
+Frontend:
+
+- `formatDate`, `formatDateTime`, `formatRelativeTime` y formatos de moneda ahora toleran `null`, `undefined` e invalid dates sin romper vistas.
+- Inventario: formulario de producto permite subir imagen desde celular/computador usando `ImageUploader` con `folder="products"`, manteniendo URL manual como opcion secundaria.
+- Marketplace redisenado como directorio premium:
+  - cards de comercios con banner/logo, estado, tipo, ciudad, productos, sede, domicilio y CTA.
+  - conteos por categoria basados en tipo de negocio.
+- Landing individual `/negocio/[slug]` mejora catalogo con conteos de categoria, cards premium y botones conectados al inventario real.
+- Socket frontend:
+  - removidos logs de debug.
+  - corregidos handlers inline para evitar listeners duplicados al desmontar.
+
+Infraestructura:
+
+- Dockerfiles ajustados para monorepo con `npm ci`, Next standalone y backend `dist/src/main.js`.
+- Backend Docker instala OpenSSL para Prisma en Alpine.
+- `docker-compose.yml` ya no hardcodea `change_me`; exige variables sensibles por entorno.
+- Nginx agrega `client_max_body_size`, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` y timeouts.
+- `.dockerignore` agregado para excluir `node_modules`, builds, logs, screenshots y artefactos pesados.
+
+### Validacion
+
+- `npm run test --workspace backend -- --runInBand`: OK, 9 tests.
+- `npm run typecheck --workspace backend`: OK.
+- `npm run typecheck --workspace frontend`: OK.
+- `npm run build --workspace backend`: OK.
+- `npm run build --workspace frontend`: OK.
+- `docker build -f backend/Dockerfile -t mocoa-backend:test .`: OK.
+- `docker build -f frontend/Dockerfile -t mocoa-frontend:test .`: OK.
+- Smoke HTTP:
+  - `http://localhost:3001/health`: 200, DB ok.
+  - `http://localhost:3000/marketplace`: 200.
+- Smoke navegador:
+  - `/marketplace`: carga con assets Next 200.
+  - `/admin/inventory`: carga H1 Inventario.
+  - `/admin/pos`: carga H1 Punto de venta.
+  - `/admin/superadmin/plans`: carga H1 Planes.
+  - `/negocio/tienda-demo-mocoa`: carga landing y assets 200.
+
+### Riesgos residuales
+
+- `npm audit --workspaces --audit-level=moderate` queda con vulnerabilidad moderada de `postcss` transitiva via Next. `npm audit fix --force` propone bajar Next a 9.3.3, por lo que no se aplico por ser ruptura mayor e insegura funcionalmente.
+- Sigue pendiente migracion profunda de tokens desde `localStorage` a cookies HttpOnly.
+- Next 16 advierte que `middleware` esta deprecado a favor de `proxy`; queda para una fase de compatibilidad posterior.
+
+---
+
 ## 2026-06-13 - Compras: facturas, vencimientos y OCR con Ollama
 
 ### Contexto

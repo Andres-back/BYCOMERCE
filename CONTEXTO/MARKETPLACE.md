@@ -452,3 +452,17 @@ No duplicar comercios.
 Toda distancia debe calcularse mediante geolocalización real.
 
 Marketplace es la puerta de entrada principal para los clientes de la plataforma.
+
+---
+
+# ACTUALIZACION 2026-06-14
+
+- `/marketplace` adopta una presentacion tipo directorio premium:
+  - categorias con conteos.
+  - cards de comercio con banner/logo, estado, tipo de negocio, ciudad/barrio, productos, sede y domicilio.
+  - CTA directo a la pagina del negocio.
+- `/negocio/[slug]` mantiene fuente de verdad en inventario y mejora el catalogo:
+  - filtros con conteos por categoria.
+  - cards de producto con imagen, disponibilidad, categoria, precio y accion de agregar.
+  - paleta sigue saliendo del branding del tenant o fallback por tipo de negocio.
+- No se copio contenido ni marca externa; se adapto el patron visual solicitado como referencia.

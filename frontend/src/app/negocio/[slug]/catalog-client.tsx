@@ -93,6 +93,14 @@ export function CatalogClient({
     ],
     [products],
   );
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { Todas: products.length };
+    for (const product of products) {
+      const name = product.category?.nombre;
+      if (name) counts[name] = (counts[name] ?? 0) + 1;
+    }
+    return counts;
+  }, [products]);
 
   const visibleProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -203,7 +211,10 @@ export function CatalogClient({
                     onClick={() => setCategory(item)}
                     style={category === item ? { background: primaryColor, color: 'white', borderColor: primaryColor } : undefined}
                   >
-                    {item}
+                    {item}{' '}
+                    <span className="ml-1 rounded-full bg-background/20 px-1.5 text-[10px]">
+                      {categoryCounts[item] ?? 0}
+                    </span>
                   </Button>
                 ))}
               </div>
@@ -216,14 +227,14 @@ export function CatalogClient({
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {visibleProducts.map((product) => (
-                  <Card key={product.id} size="sm">
-                    <div className="relative h-40 w-full bg-muted">
+                  <Card key={product.id} size="sm" className="group overflow-hidden border-border/80 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="relative h-44 w-full bg-muted">
                       {product.imagenPrincipal ? (
                         <Image
                           src={product.imagenPrincipal}
                           alt={product.nombre}
                           fill
-                          className="rounded-t-xl object-cover"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                           unoptimized
                         />
                       ) : (
@@ -231,11 +242,15 @@ export function CatalogClient({
                           Sin imagen
                         </div>
                       )}
+                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
                       {product.destacado && (
                         <Badge className="absolute top-2 left-2 bg-amber-500 text-white hover:bg-amber-500">
                           Destacado
                         </Badge>
                       )}
+                      <Badge className="absolute right-2 top-2 border-0 text-white" style={{ background: primaryColor }}>
+                        {product.stock > 0 ? 'Disponible' : 'Agotado'}
+                      </Badge>
                     </div>
                     <CardContent className="space-y-2 pt-4">
                       <div className="flex items-center justify-between">
@@ -275,11 +290,11 @@ export function CatalogClient({
                       )}
                       <Button
                         type="button"
-                        variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full text-white"
                         onClick={() => addProduct(product)}
                         disabled={product.stock <= 0}
+                        style={{ background: product.stock > 0 ? primaryColor : undefined }}
                       >
                         <Plus className="size-4" /> Agregar
                       </Button>

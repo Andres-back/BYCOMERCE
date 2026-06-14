@@ -68,4 +68,4 @@ export interface ChatResponse {
   sessionId: string;
 }
 
-export const LOW_CONFIDENCE_THRESHOLD = 0.35;
+export const LOW_CONFIDENCE_THRESHOLD = 0.55;

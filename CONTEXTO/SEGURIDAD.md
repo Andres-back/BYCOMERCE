@@ -1,5 +1,36 @@
 # SEGURIDAD.md
 
+# REVISION 2026-06-14 - HARDENING CRITICO MVP
+
+## Cambios aplicados
+
+- Uploads:
+  - allowlist de `image/jpeg`, `image/png`, `image/webp`, `application/pdf`.
+  - validacion de magic bytes para que el contenido coincida con el mimetype declarado.
+  - nombres aleatorios y extension controlada por servidor.
+  - PDF servido como attachment.
+- Infra:
+  - Docker usa `npm ci` y contexto monorepo controlado.
+  - `docker-compose.yml` exige secretos reales para Postgres, MinIO y `AI_SECRET_ENCRYPTION_KEY`.
+  - Nginx agrega headers base: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`.
+  - `client_max_body_size 16m` alineado con limite de uploads.
+- Frontend:
+  - removidos logs de debug de WebSocket.
+  - corregida fuga de listeners socket.
+  - formatos de fecha toleran datos ausentes para evitar crashes y exposicion de errores.
+- Dependencias:
+  - actualizaciones patch/minor aplicadas en Next, React, Tailwind, Nest, AWS SDK, Helmet, `tsx` y tooling Nest.
+  - `npm audit fix` normal aplicado sin `--force`.
+
+## Riesgos pendientes
+
+- Autenticacion: access/refresh token siguen en `localStorage`. Riesgo alto ante XSS. Pendiente fase auth profunda con refresh token en cookie HttpOnly, rotacion y CSRF/Origin checks si se habilitan cookies.
+- `npm audit` residual: PostCSS moderado via Next. No se aplico `npm audit fix --force` porque propone downgrade destructivo a Next 9.3.3.
+- CSP estricta: Nginx tiene headers base, pero falta politica CSP iterativa en report-only antes de enforcement.
+- Rate limiting: no se implemento throttling app/edge para login y endpoints costosos en esta fase.
+
+---
+
 # OBJETIVO
 
 Definir la estrategia de seguridad integral de Mocoa Market.

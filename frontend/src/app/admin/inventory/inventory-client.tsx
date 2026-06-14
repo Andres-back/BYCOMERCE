@@ -70,6 +70,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { PageHeader } from '@/components/layouts/page-header';
 import { StatCard } from '@/components/shared/stat-card';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
+import { ImageUploader } from '@/components/shared/image-uploader';
 
 import { formatCopCentavos, availabilityLabel, availabilityVariant } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -863,9 +864,23 @@ export function InventoryClient() {
                 <Input id="prod-marca" {...productForm.register('marca')} />
               </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="prod-imagen">Imagen URL</Label>
-              <Input id="prod-imagen" {...productForm.register('imagenPrincipal')} />
+            <div className="space-y-2">
+              <Label>Imagen del producto</Label>
+              <ImageUploader
+                value={productForm.watch('imagenPrincipal') || null}
+                onChange={(url) => productForm.setValue('imagenPrincipal', url ?? '', { shouldDirty: true, shouldValidate: true })}
+                folder="products"
+                aspectRatio="square"
+                placeholder="Subir desde celular o computador"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="prod-imagen" className="text-xs text-muted-foreground">URL manual opcional</Label>
+                <Input
+                  id="prod-imagen"
+                  placeholder="https://..."
+                  {...productForm.register('imagenPrincipal')}
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <input

@@ -37,13 +37,8 @@ export function useSocket() {
       socket.connect();
     }
 
-    socket.on('connect', () => {
-      console.log('[WS] Connected');
-    });
-
-    socket.on('connected', (data: { userId: string; tenantId: string }) => {
-      console.log('[WS] Authenticated', data);
-    });
+    const handleConnect = () => undefined;
+    const handleConnected = () => undefined;
 
     const invalidateProducts = () => {
       qc.invalidateQueries({ queryKey: ['products'] });
@@ -65,15 +60,21 @@ export function useSocket() {
       qc.invalidateQueries({ queryKey: ['notifications'] });
     };
 
-    socket.on('order:created', (data) => {
+    const handleOrderCreated = () => {
       invalidateOrders();
-      toast.info('Nuevo pedido', { description: `Pedido recibido` });
-    });
+      toast.info('Nuevo pedido', { description: 'Pedido recibido' });
+    };
 
-    socket.on('order:status_changed', (data) => {
+    const handleOrderStatusChanged = () => {
       invalidateOrders();
-    });
+    };
 
+    const handleDisconnect = () => undefined;
+
+    socket.on('connect', handleConnect);
+    socket.on('connected', handleConnected);
+    socket.on('order:created', handleOrderCreated);
+    socket.on('order:status_changed', handleOrderStatusChanged);
     socket.on('product:updated', invalidateProducts);
     socket.on('stock:adjusted', invalidateProducts);
     socket.on('sale:created', invalidateSales);
@@ -81,19 +82,20 @@ export function useSocket() {
     socket.on('dashboard:refresh', invalidateDashboard);
     socket.on('notification', invalidateNotifications);
 
-    socket.on('disconnect', () => {
-      console.log('[WS] Disconnected');
-    });
+    socket.on('disconnect', handleDisconnect);
 
     return () => {
-      socket.off('order:created', invalidateOrders);
-      socket.off('order:status_changed', invalidateOrders);
+      socket.off('connect', handleConnect);
+      socket.off('connected', handleConnected);
+      socket.off('order:created', handleOrderCreated);
+      socket.off('order:status_changed', handleOrderStatusChanged);
       socket.off('product:updated', invalidateProducts);
       socket.off('stock:adjusted', invalidateProducts);
       socket.off('sale:created', invalidateSales);
       socket.off('sale:voided', invalidateSales);
       socket.off('dashboard:refresh', invalidateDashboard);
       socket.off('notification', invalidateNotifications);
+      socket.off('disconnect', handleDisconnect);
     };
   }, [token, qc]);
 

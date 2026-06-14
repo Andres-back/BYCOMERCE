@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ArrowRight, Building2, Coffee, Heart, MapPin, Package, Search,
+  ArrowRight, Building2, CheckCircle2, Coffee, Heart, MapPin, Package, Search,
   ShoppingBag, Store, Tag, Truck, UtensilsCrossed, X, Menu, Filter,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -47,6 +47,26 @@ const PRODUCT_IMAGES: Record<string, string> = {
   'Arroz Premium 1kg': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&q=80',
 };
 
+function businessMatchesCategory(business: Business, categoryId: string) {
+  if (categoryId === 'Todos') return true;
+  if (categoryId === 'destacados') return (business._count?.products ?? 0) > 0;
+  if (categoryId === 'domicilio') return Boolean(business.deliveryConfig?.activo);
+  const type = business.tipoNegocio.toLowerCase();
+  const matchers: Record<string, RegExp> = {
+    restaurantes: /(restaurante|comida|cafe|cafeter|bar|gastro|panader|menu)/,
+    calzado: /(calzado|zapato|tenis|sneaker)/,
+    tiendas: /(tienda|mercado|super|abarrote|miscelanea|farmacia)/,
+    bebidas: /(bebida|licor|bar|cafe|jugos)/,
+    accesorios: /(accesorio|joya|reloj|bisuteria)/,
+    servicios: /(servicio|belleza|spa|taller|asesoria)/,
+  };
+  return matchers[categoryId]?.test(type) ?? type.includes(categoryId.toLowerCase());
+}
+
+function businessVisual(business: Business) {
+  return business.businessSettings?.banner || business.businessImages?.[0]?.url || BUSINESS_IMAGES[business.nombre] || null;
+}
+
 export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceClientProps) {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
@@ -67,7 +87,7 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
     const normalized = query.trim().toLowerCase();
     return businesses.filter((business) => {
       const matchesQuery = !normalized || [business.nombre, business.tipoNegocio, business.barrio, business.ciudad].filter(Boolean).some((value) => value?.toLowerCase().includes(normalized));
-      const matchesCategory = activeCategory === 'Todos' || business.tipoNegocio.toLowerCase().includes(activeCategory.toLowerCase());
+      const matchesCategory = businessMatchesCategory(business, activeCategory);
       const matchesLocation = location === 'Todas' || (business.barrio ?? business.ciudad) === location;
       const matchesCategoryFilter = category === 'Todas' || business.tipoNegocio.toLowerCase().includes(category.toLowerCase());
       return matchesQuery && matchesCategory && matchesLocation && matchesCategoryFilter;
@@ -84,7 +104,9 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    businesses.forEach((b) => { const cat = b.tipoNegocio.toLowerCase(); counts[cat] = (counts[cat] ?? 0) + 1; });
+    for (const cat of CATEGORIES) {
+      counts[cat.id] = businesses.filter((business) => businessMatchesCategory(business, cat.id)).length;
+    }
     return counts;
   }, [businesses]);
 
@@ -314,46 +336,66 @@ export function MarketplaceClient({ businesses, featuredProducts }: MarketplaceC
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" ref={businessRef}>
-                  {filteredBusinesses.map((business) => (
-                    <Link key={business.id} href={`/negocio/${business.slug}`} className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-                      <div className="relative h-40 w-full md:h-44">
-                        {BUSINESS_IMAGES[business.nombre] ? (
-                          <Image src={BUSINESS_IMAGES[business.nombre]} alt={business.nombre} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
-                        ) : (
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-teal-600 to-teal-800 text-3xl font-bold text-white">
-                            {business.nombre.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                        <button className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition-transform hover:scale-110">
-                          <Heart className="size-4 text-muted-foreground" />
-                        </button>
-                      </div>
-                      <div className="space-y-2.5 p-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          <Badge variant="secondary" className="text-xs">{business.tipoNegocio}</Badge>
-                          {business.deliveryConfig?.activo && (
-                            <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50">
-                              <Truck className="mr-1 size-3" /> Domicilio
-                            </Badge>
+                  {filteredBusinesses.map((business) => {
+                    const cover = businessVisual(business);
+                    const logo = business.businessSettings?.logo || business.logo;
+                    const productCount = business._count?.products ?? 0;
+                    const isOpen = productCount > 0;
+                    return (
+                      <Link key={business.id} href={`/negocio/${business.slug}`} className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md dark:hover:border-teal-700">
+                        <div className="relative h-28 w-full bg-gradient-to-br from-teal-700 to-emerald-800">
+                          {cover && (
+                            <Image src={cover} alt={business.nombre} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
                           )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                          <Badge className={cn(
+                            'absolute left-3 top-3 border-0 text-[10px] font-bold uppercase tracking-wide',
+                            isOpen ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white',
+                          )}>
+                            {isOpen ? 'Abierto' : 'Proximamente'}
+                          </Badge>
+                          <div className="absolute -bottom-6 left-4 flex size-12 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-teal-700 text-sm font-black text-white shadow-sm">
+                            {logo ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={logo} alt={business.nombre} className="h-full w-full object-cover" />
+                            ) : (
+                              business.nombre.slice(0, 2).toUpperCase()
+                            )}
+                          </div>
                         </div>
-                        <h3 className="font-bold text-foreground group-hover:text-teal-700 transition-colors">{business.nombre}</h3>
-                        {business.direccion && (
-                          <p className="flex items-center gap-1 text-sm text-muted-foreground truncate">
-                            <MapPin className="size-3.5 shrink-0" /> {business.direccion}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <ShoppingBag className="size-3.5" /> {business._count?.products ?? 0} productos
-                          </p>
-                          <span className="flex items-center gap-1 text-sm font-medium text-teal-700">
-                            Ver tienda <ArrowRight className="size-3.5" />
+                        <div className="space-y-3 p-4 pt-8">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-base font-black text-foreground transition-colors group-hover:text-teal-700 dark:group-hover:text-teal-300">{business.nombre}</h3>
+                            <p className="mt-1 truncate text-xs font-medium text-muted-foreground">{business.tipoNegocio}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                            <span className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-muted/60 px-2 py-1.5">
+                              <MapPin className="size-3.5 shrink-0" />
+                              <span className="truncate">{business.barrio || business.ciudad || 'Mocoa'}</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-muted/60 px-2 py-1.5">
+                              <ShoppingBag className="size-3.5" />
+                              {productCount} productos
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                              <CheckCircle2 className="size-3.5 text-emerald-600" />
+                              1 sede
+                            </span>
+                            {business.deliveryConfig?.activo && (
+                              <Badge variant="outline" className="border-blue-200 bg-blue-50 text-xs text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+                                <Truck className="mr-1 size-3" /> Domicilio
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-bold text-teal-800 transition-colors group-hover:bg-teal-700 group-hover:text-white dark:border-teal-900 dark:bg-teal-950/40 dark:text-teal-200">
+                            Ver tienda <ArrowRight className="size-4" />
                           </span>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>

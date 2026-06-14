@@ -53,8 +53,8 @@ export class UploadsController {
       throw new BadRequestException('Tenant requerido para subir archivos');
     }
 
-    this.uploadsService.validateFile(file.mimetype, file.size);
-    const key = this.uploadsService.generateKey(user.tenantId, folder || 'products', file.originalname);
+    this.uploadsService.validateFile(file.mimetype, file.size, file.buffer);
+    const key = this.uploadsService.generateKey(user.tenantId, folder || 'products', file.mimetype);
     const result = await this.uploadsService.uploadBuffer(key, file.buffer, file.mimetype);
 
     return {

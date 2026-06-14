@@ -1,22 +1,33 @@
-export function formatCop(value: number): string {
+export function formatCop(value: number | null | undefined): string {
+  const safeValue = typeof value === 'number' && Number.isFinite(value) ? value : 0;
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(safeValue);
 }
 
-export function formatCopCentavos(value: number): string {
-  return formatCop(value / 100);
+export function formatCopCentavos(value: number | null | undefined): string {
+  const safeValue = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  return formatCop(safeValue / 100);
 }
 
-export function formatDate(date: string | Date): string {
+function parseDate(date: string | Date | null | undefined): Date | null {
+  if (!date) return null;
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+export function formatDate(date: string | Date | null | undefined): string {
+  const d = parseDate(date);
+  if (!d) return '-';
   return d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export function formatDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+export function formatDateTime(date: string | Date | null | undefined): string {
+  const d = parseDate(date);
+  if (!d) return '-';
   return d.toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'short',
@@ -26,8 +37,9 @@ export function formatDateTime(date: string | Date): string {
   });
 }
 
-export function formatRelativeTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+export function formatRelativeTime(date: string | Date | null | undefined): string {
+  const d = parseDate(date);
+  if (!d) return '-';
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const minutes = Math.floor(diff / 60000);
