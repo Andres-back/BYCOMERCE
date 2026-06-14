@@ -968,6 +968,45 @@ Infraestructura:
 - Sigue pendiente migracion profunda de tokens desde `localStorage` a cookies HttpOnly.
 - Next 16 advierte que `middleware` esta deprecado a favor de `proxy`; queda para una fase de compatibilidad posterior.
 
+## 2026-06-14 - Marketplace desktop, comercios demo y reparacion de assets Next
+
+### Contexto
+
+Se tomo como referencia publica `https://daimuz.alexsters.works/`: marketplace con barra superior, busqueda, hero horizontal, tarjetas "Para ti", tabs de comercios/ofertas/novedades, chips con conteos, cards de comercios con estado y panel lateral de estadisticas/promos. La adaptacion mantiene marca propia Mocoa Market y usa datos internos del sistema.
+
+### Cambios
+
+- `/marketplace` ahora usa el directorio de comercios, no solo una grilla de productos.
+- `MarketplaceClient` fue redisenado para desktop ancho:
+  - hero horizontal con busqueda, filtros y producto destacado.
+  - panel lateral de metricas/filtros.
+  - carril "Para ti" con productos, comercios, ofertas y novedades.
+  - tabs y chips de categorias con conteos.
+  - cards de comercios con banner/logo, estado, ciudad, productos, sede, delivery y CTA.
+- Seed idempotente agrega 12 comercios demo inspirados en el directorio publico revisado:
+  - ALFA, anmarg, DISTRILUNA LTDA, ELIAN NICOLAS, FAST FOOD, HAPPYTULS, SIRIUSGASTROPUD, TIENDA LA ABUELA, TAPICERIA E INSTALACIONES G&S, DEV CONTENT, LICOGRANS y LUKYGYM.
+  - Cada comercio queda con branding, delivery, categoria y productos destacados.
+- Se corrigio el arranque frontend con `output: 'standalone'`:
+  - `npm run start --workspace frontend` ahora usa `frontend/scripts/start-standalone.mjs`.
+  - El script sincroniza `.next/static` y `public` al directorio standalone antes de levantar `server.js`.
+  - Docker frontend ahora ejecuta `frontend/server.js` y copia static/public a la ruta correcta.
+
+### Validacion
+
+- `npm run typecheck --workspace frontend`: OK.
+- `npm run typecheck --workspace backend`: OK.
+- `npm run seed --workspace backend`: OK.
+- `npm run build --workspace frontend`: OK.
+- `npm run build --workspace backend`: OK despues de detener el proceso backend que bloqueaba Prisma en Windows.
+- Smoke HTTP `/marketplace`: 200.
+- Smoke assets Next: 26 assets `_next/static` referenciados por `/marketplace`, 0 fallos.
+- Browser desktop: 25 enlaces a `/negocio/*`, con comercios como `ALFA`, `anmarg`, `DISTRILUNA LTDA`, `ELIAN NICOLAS`.
+
+### Pendiente
+
+- El warning de Next sobre `middleware` deprecado a `proxy` sigue pendiente.
+- El push a GitHub depende de credenciales locales disponibles en la maquina.
+
 ---
 
 ## 2026-06-13 - Compras: facturas, vencimientos y OCR con Ollama

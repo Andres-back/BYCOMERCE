@@ -16,7 +16,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app/frontend
 ENV NODE_ENV=production
 COPY --from=build /app/frontend/.next/standalone ./
-COPY --from=build /app/frontend/.next/static ./.next/static
-COPY --from=build /app/frontend/public ./public
+COPY --from=build /app/frontend/.next/static ./frontend/.next/static
+COPY --from=build /app/frontend/public ./frontend/public
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "frontend/server.js"]

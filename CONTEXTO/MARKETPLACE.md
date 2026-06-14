@@ -466,3 +466,21 @@ Marketplace es la puerta de entrada principal para los clientes de la plataforma
   - cards de producto con imagen, disponibilidad, categoria, precio y accion de agregar.
   - paleta sigue saliendo del branding del tenant o fallback por tipo de negocio.
 - No se copio contenido ni marca externa; se adapto el patron visual solicitado como referencia.
+
+# ACTUALIZACION 2026-06-14 - DIRECTORIO DESKTOP Y DATOS DEMO
+
+- Referencia revisada: `https://daimuz.alexsters.works/`.
+- Patron aplicado:
+  - header compacto con busqueda.
+  - hero horizontal para pantallas de computador.
+  - producto destacado al lado del hero.
+  - tarjetas "Para ti".
+  - tabs Comercios/Ofertas/Novedades.
+  - chips de categorias con conteos.
+  - panel lateral de estadisticas y promociones.
+- `/marketplace` ahora muestra comercios como primera experiencia, no solo productos.
+- Seed demo:
+  - 12 comercios locales de muestra, con productos, categorias, banners, logos, delivery y branding.
+  - Los nombres/tipos se tomaron como datos publicos visibles del directorio de referencia y los productos/imagenes son demo propios de Mocoa Market.
+- Regla tecnica:
+  - el frontend de produccion debe arrancar con standalone, no con `next start`, para evitar errores 500/404 en chunks CSS/JS.
