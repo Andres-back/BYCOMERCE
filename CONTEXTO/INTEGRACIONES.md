@@ -36,6 +36,8 @@ Detalle de geolocalización: [[GEOLOCALIZACION.md]].
 | Uptime monitoring | UptimeRobot | ✅ |
 | Métricas | Prometheus + Grafana | ✅ |
 
+| Asistente IA y vision | Groq Cloud + Ollama local | Implementado MVP, configurable por tenant |
+
 ## Fase 2 (post-MVP)
 
 | Servicio | Proveedor candidato | Notas |
@@ -119,6 +121,30 @@ export class WhatsAppModule {}
 ---
 
 # CONFIGURACIÓN
+
+## IA por tenant
+
+- Cada negocio puede activar/desactivar asistente IA y vision IA.
+- `TenantAiSettings` guarda configuracion privada por tenant.
+- Las API keys de Groq se guardan cifradas con `AI_SECRET_ENCRYPTION_KEY`.
+- El frontend nunca recibe la clave real; solo recibe `hasGroqApiKey`.
+- Vision soporta proveedor `OLLAMA` o `GROQ`.
+- Groq usa endpoint OpenAI-compatible `https://api.groq.com/openai/v1/chat/completions`.
+- Modelos por defecto:
+  - Soporte: `llama-3.3-70b-versatile`.
+  - Vision Groq: `meta-llama/llama-4-scout-17b-16e-instruct`.
+  - Vision Ollama: `llava:latest`.
+
+Variables:
+
+```env
+AI_SECRET_ENCRYPTION_KEY=
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_VISION_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+OLLAMA_URL=http://localhost:11434
+OLLAMA_VISION_MODEL=llava:latest
+```
 
 ## Variables de entorno por integración
 

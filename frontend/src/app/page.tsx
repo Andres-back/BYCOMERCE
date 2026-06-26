@@ -31,15 +31,15 @@ export default async function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
-            <Link href="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
+            <Link href="/#comercios" className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-teal-700 dark:text-slate-200 dark:hover:text-teal-300">
               <ShoppingBag className="size-4" />
               Comercios
             </Link>
-            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
+            <Link href="/#para-ti" className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-teal-700 dark:text-slate-200 dark:hover:text-teal-300">
               <ShoppingBag className="size-4" />
               Productos
             </Link>
-            <Link href="/marketplace" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-teal-700">
+            <Link href="/#domicilios" className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-teal-700 dark:text-slate-200 dark:hover:text-teal-300">
               <Truck className="size-4" />
               Domicilios
             </Link>

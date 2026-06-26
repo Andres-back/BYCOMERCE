@@ -1,4 +1,3 @@
-import { PrismaService } from '../../../database/prisma.service';
 import { IntentDefinition } from './intent.types';
 
 interface HelpEntry {
@@ -163,7 +162,7 @@ const HELP_TOPICS: HelpEntry[] = [
   },
 ];
 
-export function createHelpIntents(_prisma: PrismaService): IntentDefinition[] {
+export function createHelpIntents(): IntentDefinition[] {
   return [
     {
       name: 'help.how_to',
@@ -175,7 +174,8 @@ export function createHelpIntents(_prisma: PrismaService): IntentDefinition[] {
         'cómo agrego un usuario',
       ],
       keywords: ['como', 'cómo', 'hacer', 'configurar', 'cambiar', 'agregar', 'crear', 'subir', 'abrir', 'cerrar', 'registrar', 'cancelo', 'rechazar', 'reporte', 'informes'],
-      async handle(q, _e, _ctx) {
+      async handle(q) {
+        await Promise.resolve();
         const lower = q.toLowerCase();
         for (const entry of HELP_TOPICS) {
           if (entry.patterns.some((p) => lower.includes(p))) {

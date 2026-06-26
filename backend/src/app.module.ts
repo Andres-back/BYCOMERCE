@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
 import { Request, Response, NextFunction } from 'express';
 import { env } from './config/env';
+import { csrfMiddleware } from './common/middleware/csrf.middleware';
 import { DatabaseModule } from './database/database.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -29,6 +30,7 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { BusinessTypesModule } from './modules/business-types/business-types.module';
+import { AiModule } from './modules/ai/ai.module';
 
 type RequestWithId = Request & { id?: string };
 
@@ -40,6 +42,7 @@ type RequestWithId = Request & { id?: string };
       load: [env],
     }),
     DatabaseModule,
+    AiModule,
     AuditModule,
     AuthModule,
     CustomersModule,
@@ -75,7 +78,7 @@ export class AppModule implements NestModule {
         req.id = requestId;
         res.setHeader('x-request-id', requestId);
         next();
-      })
+      }, csrfMiddleware)
       .forRoutes('*');
   }
 }

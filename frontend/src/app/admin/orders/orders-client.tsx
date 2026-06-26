@@ -253,6 +253,7 @@ export default function OrdersClient() {
     return d >= today;
   }).length;
   const canAssignDelivery = isAdmin || isSupervisor;
+  const isDeliveryRole = role === 'DOMICILIARIO';
 
   const archivedOrders = orders.filter((o) => o.estado === 'CANCELADA' || o.estado === 'RECHAZADA');
 
@@ -294,8 +295,11 @@ export default function OrdersClient() {
   return (
     <FadeIn as="main" className="space-y-6">
       <Breadcrumbs />
-      <PageHeader title="Pedidos" description="Gestiona los pedidos del negocio y actualiza su estado.">
-        {role === 'DOMICILIARIO' && (
+      <PageHeader
+        title={isDeliveryRole ? 'Mis pedidos' : 'Pedidos'}
+        description={isDeliveryRole ? 'Pedidos asignados y ruta de entrega para hoy.' : 'Gestiona los pedidos del negocio y actualiza su estado.'}
+      >
+        {isDeliveryRole && (
           <Button variant="default" onClick={() => router.push('/admin/delivery/route')}>
             <Route className="size-4 mr-1" /> Mi ruta
           </Button>
@@ -312,7 +316,7 @@ export default function OrdersClient() {
         <StatCard title="Entregados hoy" value={deliveredTodayCount} icon={PackageCheck} />
       </div>
 
-      <div className="hidden lg:block">
+      {!isDeliveryRole && <div className="hidden lg:block">
         <StaggerList stagger={0.03}><div className="flex gap-4 overflow-x-auto pb-4">
           {KANBAN_COLUMNS.map((col) => (
             <KanbanColumn
@@ -338,9 +342,9 @@ export default function OrdersClient() {
             )}
           </div>
         )}
-      </div>
+      </div>}
 
-      <div className="lg:hidden space-y-4">
+      <div className={cn(isDeliveryRole ? 'space-y-4' : 'lg:hidden space-y-4')}>
         <Select value={mobileFilter} onValueChange={(v) => setMobileFilter(v ?? '')}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Filtrar por estado" />

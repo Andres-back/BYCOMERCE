@@ -26,7 +26,7 @@ export default function RouteClient() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className={role === 'DOMICILIARIO' ? 'space-y-4 text-sm' : 'space-y-6'}>
       <PageHeader
         title="Ruta de entrega"
         description={role === 'DOMICILIARIO' ? 'Tu ruta asignada para hoy' : 'Órdenes en ruta'}
@@ -38,12 +38,12 @@ export default function RouteClient() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
             ))}
           </div>
-          <div className="h-[500px] bg-muted animate-pulse rounded-lg" />
+          <div className="h-[380px] bg-muted animate-pulse rounded-lg" />
         </div>
       ) : error ? (
         <Card>
@@ -60,7 +60,7 @@ export default function RouteClient() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <StatCard title="Paradas" value={data.totalOrders} icon={MapPin} />
             <StatCard title="Distancia total" value={`${data.totalDistancia} km`} icon={Bike} />
             <StatCard title="Origen" value={data.business.nombre} icon={Package} />
@@ -72,14 +72,14 @@ export default function RouteClient() {
             onSelectOrder={(id) => router.push(`/admin/orders`)}
           />
 
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg">Paradas</h3>
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold">Paradas</h3>
             {data.orders.map((order, i) => (
               <Card key={order.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-2.5">
+                      <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                         {i + 1}
                       </div>
                       <div className="min-w-0 flex-1 space-y-1">

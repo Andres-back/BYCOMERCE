@@ -28,13 +28,13 @@ function getIconStyle(index: number): string {
 export function StatCard({ title, value, icon: Icon, trend, trendValue, description, className }: StatCardProps) {
   return (
     <div className={cn(
-      'admin-card-soft group relative overflow-hidden rounded-xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25',
+      'admin-card-soft group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 sm:p-5',
       className,
     )}>
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
+        <div className="min-w-0 space-y-2">
+          <p className="truncate text-sm font-semibold text-muted-foreground">{title}</p>
+          <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{value}</p>
           {(trend || trendValue) && (
             <div className="flex items-center gap-1.5">
               {trend === 'up' && <TrendingUp className="size-3.5 text-green-500" />}
@@ -46,7 +46,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendValue, descript
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
         {Icon && (
-          <div className={cn('flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105', getIconStyle(title.length))}>
+          <div className={cn('flex size-11 shrink-0 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-105 sm:size-12', getIconStyle(title.length))}>
             <Icon className="size-5" />
           </div>
         )}

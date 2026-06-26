@@ -1,4 +1,3 @@
-import { PrismaService } from '../../../database/prisma.service';
 import { IntentDefinition } from './intent.types';
 
 interface NavEntry {
@@ -21,7 +20,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { patterns: ['compras', 'purchases', 'ir a compras', 'proveedores'], href: '/admin/purchases', label: 'Compras', description: 'Compras a proveedores' },
 ];
 
-export function createNavigationIntents(_prisma: PrismaService): IntentDefinition[] {
+export function createNavigationIntents(): IntentDefinition[] {
   return [
     {
       name: 'navigation.go',
@@ -34,7 +33,8 @@ export function createNavigationIntents(_prisma: PrismaService): IntentDefinitio
         'mostrar caja',
       ],
       keywords: ['ir', 'abrir', 'mostrar', 'llevame', 'llévame', 'navegar', 'donde', 'dónde', 'voy'],
-      async handle(q, _e, _ctx) {
+      async handle(q) {
+        await Promise.resolve();
         const lower = q.toLowerCase();
         const matched = NAV_ENTRIES.find((n) => n.patterns.some((p) => lower.includes(p)));
         if (!matched) {

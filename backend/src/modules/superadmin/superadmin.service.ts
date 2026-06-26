@@ -24,6 +24,7 @@ import {
 } from './dto/superadmin.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
+import { Prisma } from '../../database/prisma-client';
 
 @Injectable()
 export class SuperadminService {
@@ -422,18 +423,33 @@ export class SuperadminService {
     const plan = await this.prisma.plan.findFirst({ where: { id } });
     if (!plan) throw new NotFoundException('Plan no encontrado');
 
-    const updated = await this.prisma.plan.update({
-      where: { id },
-      data: {
-        ...(dto.nombre !== undefined ? { nombre: dto.nombre } : {}),
-        ...(dto.descripcion !== undefined ? { descripcion: dto.descripcion } : {}),
-        ...(dto.precio !== undefined ? { precio: dto.precio } : {}),
-        ...(dto.limiteUsuarios !== undefined ? { limiteUsuarios: dto.limiteUsuarios } : {}),
-        ...(dto.limiteProductos !== undefined ? { limiteProductos: dto.limiteProductos } : {}),
-        ...(dto.almacenamientoGb !== undefined ? { almacenamientoGb: dto.almacenamientoGb } : {}),
-        ...(dto.caracteristicas !== undefined ? { caracteristicas: dto.caracteristicas } : {}),
-      },
-    });
+    if (dto.nombre && dto.nombre !== plan.nombre) {
+      const existing = await this.prisma.plan.findUnique({ where: { nombre: dto.nombre } });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('Plan con ese nombre ya existe');
+      }
+    }
+
+    let updated;
+    try {
+      updated = await this.prisma.plan.update({
+        where: { id },
+        data: {
+          ...(dto.nombre !== undefined ? { nombre: dto.nombre } : {}),
+          ...(dto.descripcion !== undefined ? { descripcion: dto.descripcion } : {}),
+          ...(dto.precio !== undefined ? { precio: dto.precio } : {}),
+          ...(dto.limiteUsuarios !== undefined ? { limiteUsuarios: dto.limiteUsuarios } : {}),
+          ...(dto.limiteProductos !== undefined ? { limiteProductos: dto.limiteProductos } : {}),
+          ...(dto.almacenamientoGb !== undefined ? { almacenamientoGb: dto.almacenamientoGb } : {}),
+          ...(dto.caracteristicas !== undefined ? { caracteristicas: dto.caracteristicas } : {}),
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('Plan con ese nombre ya existe');
+      }
+      throw error;
+    }
 
     await this.audit.log({
       tenantId: null,

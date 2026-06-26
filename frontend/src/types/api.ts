@@ -29,6 +29,62 @@ export interface BusinessSettings {
   sitioWeb?: string | null;
 }
 
+export type VisionProvider = 'OLLAMA' | 'GROQ';
+
+export interface TenantAiSettings {
+  assistantEnabled: boolean;
+  visionEnabled: boolean;
+  enterpriseIncluded: boolean;
+  visionProvider: VisionProvider;
+  hasGroqApiKey: boolean;
+  groqModel: string;
+  groqVisionModel: string;
+  ollamaUrl: string;
+  ollamaVisionModel: string;
+}
+
+export interface VisionRawResult {
+  provider: 'ollama' | 'groq';
+  model: string;
+  rawText: string;
+}
+
+export interface InvoiceExtractionResult extends VisionRawResult {
+  extracted: {
+    numeroFactura?: string | null;
+    fechaCompra?: string | null;
+    fechaVencimiento?: string | null;
+    total?: number | null;
+    proveedor?: string | null;
+    nit?: string | null;
+    confidence?: number | null;
+    observaciones?: string | null;
+  };
+}
+
+export interface ExpenseReceiptExtractionResult extends VisionRawResult {
+  extracted: {
+    categoria?: string | null;
+    descripcion?: string | null;
+    total?: number | null;
+    comercio?: string | null;
+    nit?: string | null;
+    fecha?: string | null;
+    confidence?: number | null;
+    observaciones?: string | null;
+  };
+}
+
+export interface BrandingSuggestionResult extends VisionRawResult {
+  extracted: {
+    colorPrimario?: string | null;
+    colorSecundario?: string | null;
+    colorAcento?: string | null;
+    estilo?: string | null;
+    razon?: string | null;
+  };
+}
+
 export interface BusinessImage {
   id: string;
   tenantId?: string;
@@ -149,6 +205,8 @@ export interface PurchaseItem {
   product?: Pick<Product, 'id' | 'nombre' | 'sku' | 'stock' | 'costo'>;
 }
 
+export type PurchasePaymentStatus = 'PENDIENTE' | 'PAGADA' | 'VENCIDA' | 'PARCIAL';
+
 export interface Purchase {
   id: string;
   tenantId: string;
@@ -156,9 +214,18 @@ export interface Purchase {
   numeroFactura?: string | null;
   total: number;
   fechaCompra: string;
+  fechaVencimiento?: string | null;
+  estadoPago: PurchasePaymentStatus;
+  facturaUrl?: string | null;
+  facturaKey?: string | null;
+  facturaNombre?: string | null;
+  facturaMime?: string | null;
+  facturaOcrTexto?: string | null;
+  facturaOcrJson?: Record<string, unknown> | null;
   observaciones?: string | null;
   estado: string;
   createdAt: string;
+  updatedAt?: string;
   supplier?: Supplier | null;
   items: PurchaseItem[];
 }
@@ -460,5 +527,9 @@ export interface Expense {
   descripcion: string;
   valor: number;
   comprobanteUrl?: string | null;
+  comprobanteNombre?: string | null;
+  comprobanteMime?: string | null;
+  comprobanteIaTexto?: string | null;
+  comprobanteIaJson?: Record<string, unknown> | null;
   fecha: string;
 }

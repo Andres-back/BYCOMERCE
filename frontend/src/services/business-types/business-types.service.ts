@@ -7,7 +7,7 @@ export interface BusinessTypePreset {
   descripcion: string;
   categorias: string[];
   atributosProducto: string[];
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   posConfig?: {
     mostrarMesas?: boolean;
     mostrarTiempoPreparacion?: boolean;

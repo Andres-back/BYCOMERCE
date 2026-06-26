@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  Banknote, PlusCircle, RefreshCw, WalletCards, Pencil, Trash2,
+  Banknote, PlusCircle, RefreshCw, WalletCards, Pencil, Trash2, UploadCloud, Camera, Bot, ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { FadeIn, StaggerList } from '@/components/shared/fade-in';
 import { PageHeader } from '@/components/layouts/page-header';
 import { formatCopCentavos, formatDateTime } from '@/lib/format';
+import { queryKeys } from '@/lib/query-keys';
 import {
   useCurrentCashRegister,
   useCashRegisters,
@@ -32,9 +34,29 @@ import {
   useCreateExpense,
   useUpdateExpense,
   useDeleteExpense,
+  useExtractExpenseReceipt,
 } from '@/hooks/use-finance';
+import { useAuthStore } from '@/stores/auth-store';
+import type { ApiEnvelope } from '@/types/api';
+import { csrfHeaders } from '@/services/api/client';
 import type { ColumnDef } from '@tanstack/react-table';
-import type { CashMovementType, Expense } from '@/types/api';
+import type { Expense } from '@/types/api';
+
+interface UploadResponse {
+  key: string;
+  url: string;
+  size: number;
+  mimetype: string;
+  originalName?: string;
+}
+
+interface ExpenseReceiptState {
+  url: string;
+  name?: string;
+  mime?: string;
+  iaText?: string;
+  iaJson?: Record<string, unknown>;
+}
 
 const movementLabels: Record<string, string> = {
   VENTA: 'Venta',
@@ -75,12 +97,49 @@ const expenseSchema = z.object({
 });
 type ExpenseForm = z.infer<typeof expenseSchema>;
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.onerror = () => reject(new Error('No fue posible leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadExpenseReceipt(file: File, token: string) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', 'expenses');
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
+    {
+      method: 'POST',
+      headers: csrfHeaders(),
+      credentials: 'include',
+      body: formData,
+    },
+  );
+
+  const payload = (await response.json().catch(() => ({}))) as ApiEnvelope<UploadResponse> | UploadResponse | { message?: string };
+  if (!response.ok) {
+    throw new Error('message' in payload && payload.message ? String(payload.message) : 'Error al subir comprobante');
+  }
+  return 'data' in payload ? payload.data : (payload as UploadResponse);
+}
+
 export default function CashClient() {
+  const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState('register');
   const [movementOpen, setMovementOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [expenseReceipt, setExpenseReceipt] = useState<ExpenseReceiptState | null>(null);
+  const expenseReceiptFileRef = useRef<HTMLInputElement>(null);
+  const expenseReceiptCameraRef = useRef<HTMLInputElement>(null);
 
   const { data: current, isLoading: loadingCurrent } = useCurrentCashRegister();
   const { data: registers = [], isLoading: loadingRegisters } = useCashRegisters();
@@ -91,6 +150,7 @@ export default function CashClient() {
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
+  const extractExpenseReceiptMutation = useExtractExpenseReceipt();
 
   const todayExpenses = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -111,11 +171,13 @@ export default function CashClient() {
     resolver: zodResolver(movementSchema),
     defaultValues: { tipo: 'INGRESO_MANUAL', monto: 0, descripcion: '' },
   });
+  const movementType = useWatch({ control: movementForm.control, name: 'tipo' });
 
   const expenseForm = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
     defaultValues: { categoria: '', descripcion: '', valor: 0 },
   });
+  const expenseCategory = useWatch({ control: expenseForm.control, name: 'categoria' });
 
   const editExpenseForm = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
@@ -161,10 +223,66 @@ export default function CashClient() {
   }
 
   function handleCreateExpense(data: ExpenseForm) {
-    createExpenseMutation.mutate(data, {
-      onSuccess: () => { toast.success('Gasto registrado'); expenseForm.reset(); setExpenseOpen(false); },
+    createExpenseMutation.mutate({
+      ...data,
+      comprobanteUrl: expenseReceipt?.url,
+      comprobanteNombre: expenseReceipt?.name,
+      comprobanteMime: expenseReceipt?.mime,
+      comprobanteIaTexto: expenseReceipt?.iaText,
+      comprobanteIaJson: expenseReceipt?.iaJson,
+    }, {
+      onSuccess: () => { toast.success('Gasto registrado'); expenseForm.reset(); setExpenseReceipt(null); setExpenseOpen(false); },
       onError: () => toast.error('Error al registrar gasto'),
     });
+  }
+
+  async function handleExpenseReceipt(file: File) {
+    if (!token) {
+      toast.error('No autenticado');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('Archivo demasiado grande (max 15MB)');
+      return;
+    }
+
+    setUploadingReceipt(true);
+    try {
+      const uploaded = await uploadExpenseReceipt(file, token);
+      const nextReceipt: ExpenseReceiptState = {
+        url: uploaded.url,
+        name: uploaded.originalName ?? file.name,
+        mime: uploaded.mimetype ?? file.type,
+      };
+
+      if (file.type.startsWith('image/')) {
+        const fileBase64 = await readFileAsDataUrl(file);
+        const result = await extractExpenseReceiptMutation.mutateAsync({
+          fileBase64,
+          mimeType: file.type,
+          fileName: file.name,
+        });
+        const extracted = result.extracted;
+        nextReceipt.iaText = result.rawText;
+        nextReceipt.iaJson = extracted as Record<string, unknown>;
+        if (extracted.categoria && expenseCategoryOptions.includes(extracted.categoria)) {
+          expenseForm.setValue('categoria', extracted.categoria);
+        }
+        if (extracted.descripcion) expenseForm.setValue('descripcion', extracted.descripcion);
+        if (extracted.total && extracted.total > 0) expenseForm.setValue('valor', extracted.total);
+        toast.success('Comprobante analizado con IA');
+      } else {
+        toast.success('Comprobante adjuntado. El PDF se diligencia manualmente.');
+      }
+
+      setExpenseReceipt(nextReceipt);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No fue posible procesar el comprobante');
+    } finally {
+      setUploadingReceipt(false);
+      if (expenseReceiptFileRef.current) expenseReceiptFileRef.current.value = '';
+      if (expenseReceiptCameraRef.current) expenseReceiptCameraRef.current.value = '';
+    }
   }
 
   function handleUpdateExpense(data: ExpenseForm) {
@@ -187,6 +305,16 @@ export default function CashClient() {
     { accessorKey: 'fecha', header: 'Fecha', cell: ({ row }) => formatDateTime(row.original.fecha) },
     { accessorKey: 'categoria', header: 'Categoría', cell: ({ row }) => <Badge variant="secondary">{row.original.categoria}</Badge> },
     { accessorKey: 'descripcion', header: 'Descripción' },
+    {
+      accessorKey: 'comprobanteUrl',
+      header: 'Soporte',
+      cell: ({ row }) => row.original.comprobanteUrl ? (
+        <a className="inline-flex items-center gap-1 text-xs text-primary hover:underline" href={row.original.comprobanteUrl} target="_blank" rel="noreferrer">
+          <ExternalLink className="size-3" />
+          {row.original.comprobanteIaTexto ? 'IA aplicada' : 'Abrir'}
+        </a>
+      ) : <span className="text-xs text-muted-foreground">Sin soporte</span>,
+    },
     { accessorKey: 'valor', header: 'Valor', cell: ({ row }) => formatCopCentavos(row.original.valor) },
     {
       id: 'acciones',
@@ -206,8 +334,9 @@ export default function CashClient() {
     <FadeIn as="main" className="space-y-6">
       <PageHeader title="Caja y gastos" description="Apertura, movimientos, gastos y cierre de caja.">
         <Button variant="outline" size="icon" onClick={() => {
-          useCurrentCashRegister;
-          window.location.reload();
+          void queryClient.invalidateQueries({ queryKey: queryKeys.cashRegisters.all });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.cashRegisters.current });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all() });
         }} title="Actualizar"><RefreshCw className="size-4" /></Button>
       </PageHeader>
 
@@ -401,7 +530,7 @@ export default function CashClient() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Tipo</Label>
-                <Select value={movementForm.watch('tipo')} onValueChange={(v) => { if (v !== null) movementForm.setValue('tipo', v as MovementForm['tipo']); }}>
+                <Select value={movementType} onValueChange={(v) => { if (v !== null) movementForm.setValue('tipo', v as MovementForm['tipo']); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="INGRESO_MANUAL">Ingreso manual</SelectItem>
@@ -429,7 +558,7 @@ export default function CashClient() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={expenseOpen} onOpenChange={setExpenseOpen}>
+      <Dialog open={expenseOpen} onOpenChange={(open: boolean) => { setExpenseOpen(open); if (!open) setExpenseReceipt(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Registrar gasto</DialogTitle>
@@ -437,7 +566,7 @@ export default function CashClient() {
           <form onSubmit={expenseForm.handleSubmit(handleCreateExpense)} className="space-y-3">
             <div className="space-y-1">
               <Label>Categoría</Label>
-              <Select value={expenseForm.watch('categoria')} onValueChange={(v) => expenseForm.setValue('categoria', v ?? '')}>
+              <Select value={expenseCategory} onValueChange={(v) => expenseForm.setValue('categoria', v ?? '')}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   {expenseCategoryOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -455,8 +584,53 @@ export default function CashClient() {
               <Input type="number" min={0} step={100} {...expenseForm.register('valor', { valueAsNumber: true })} />
               {expenseForm.formState.errors.valor && <p className="text-xs text-destructive">{expenseForm.formState.errors.valor.message}</p>}
             </div>
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Comprobante del gasto</p>
+                  <p className="text-xs text-muted-foreground">
+                    {expenseReceipt?.name || expenseReceipt?.url || 'Toma foto o sube imagen/PDF del soporte'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    ref={expenseReceiptCameraRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void handleExpenseReceipt(file);
+                    }}
+                  />
+                  <input
+                    ref={expenseReceiptFileRef}
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void handleExpenseReceipt(file);
+                    }}
+                  />
+                  <Button type="button" variant="outline" disabled={uploadingReceipt || extractExpenseReceiptMutation.isPending} onClick={() => expenseReceiptCameraRef.current?.click()}>
+                    <Camera className="size-4 mr-1" /> Tomar foto
+                  </Button>
+                  <Button type="button" variant="outline" disabled={uploadingReceipt || extractExpenseReceiptMutation.isPending} onClick={() => expenseReceiptFileRef.current?.click()}>
+                    <UploadCloud className="size-4 mr-1" /> Subir soporte
+                  </Button>
+                </div>
+              </div>
+              {expenseReceipt?.iaText ? (
+                <div className="mt-3 rounded-md bg-background p-3 text-xs text-muted-foreground">
+                  <div className="mb-1 flex items-center gap-1 font-medium text-foreground"><Bot className="size-3" /> Vision aplicada</div>
+                  {expenseReceipt.iaText.slice(0, 260)}
+                </div>
+              ) : null}
+            </div>
             <DialogFooter showCloseButton>
-              <Button variant="destructive" type="submit" disabled={createExpenseMutation.isPending}>Registrar gasto</Button>
+              <Button variant="destructive" type="submit" disabled={createExpenseMutation.isPending || uploadingReceipt}>Registrar gasto</Button>
             </DialogFooter>
           </form>
         </DialogContent>

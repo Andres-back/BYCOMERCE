@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { AssistantContext, IntentDefinition, IntentMatch, IntentResult, LOW_CONFIDENCE_THRESHOLD } from './intent.types';
-import { findBestIntent, isFarewell, isGreeting, isHelp, scoreIntent } from './nlp';
+import { findBestIntent } from './nlp';
 import { createSalesIntents } from './sales.intent';
 import { createInventoryIntents } from './inventory.intent';
 import { createOrdersIntents } from './orders.intent';
@@ -28,8 +28,8 @@ export class IntentRegistry {
       ...createCustomersIntents(this.prisma),
       ...createFinanceIntents(this.prisma),
       ...createSubscriptionIntents(this.prisma),
-      ...createHelpIntents(this.prisma),
-      ...createNavigationIntents(this.prisma),
+      ...createHelpIntents(),
+      ...createNavigationIntents(),
     ];
     for (const intent of all) {
       this.intents.set(intent.name, intent);
@@ -68,7 +68,7 @@ export class IntentRegistry {
     const canHandle = intent.canHandle ? await intent.canHandle(ctx) : true;
     if (!canHandle) {
       return {
-        answer: this.buildCannotHandleAnswer(match.intent, ctx),
+        answer: this.buildCannotHandleAnswer(match.intent),
         suggestions: this.suggestAlternatives(match.intent),
       };
     }
@@ -82,7 +82,7 @@ export class IntentRegistry {
     }
   }
 
-  private buildCannotHandleAnswer(intent: string, ctx: AssistantContext): string {
+  private buildCannotHandleAnswer(intent: string): string {
     if (intent.startsWith('superadmin.')) {
       return `No puedo responder sobre "${intent}" porque no tienes permisos de superadministrador. Esta información solo está disponible para administradores globales del sistema.`;
     }
@@ -109,7 +109,7 @@ export class IntentRegistry {
 /**
  * Build a "I cannot answer" response for queries that are completely out of domain.
  */
-export function buildOutOfDomainAnswer(query: string, ctx: AssistantContext): IntentResult {
+export function buildOutOfDomainAnswer(query: string): IntentResult {
   const lower = query.toLowerCase();
   const trimmed = query.trim();
 

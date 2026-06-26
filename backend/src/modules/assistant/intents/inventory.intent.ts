@@ -1,6 +1,6 @@
 import { PrismaService } from '../../../database/prisma.service';
 import { IntentDefinition } from './intent.types';
-import { formatNumber, isActiveEstado } from './helpers';
+import { formatNumber } from './helpers';
 import { EstadoGeneral } from '../../../database/prisma-client';
 
 export function createInventoryIntents(prisma: PrismaService): IntentDefinition[] {

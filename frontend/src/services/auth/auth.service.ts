@@ -7,8 +7,6 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
   user: {
     id: string;
     nombre: string;
@@ -18,6 +16,7 @@ export interface LoginResponse {
     isSuperAdmin: boolean;
   };
   expiresIn: number;
+  authenticated: true;
 }
 
 export interface AuthUser {
@@ -31,5 +30,7 @@ export interface AuthUser {
 
 export const authService = {
   login: (data: LoginRequest) => apiPost<LoginResponse, LoginRequest>('/auth/login', data),
-  me: (token: string) => apiGet<AuthUser>('/auth/me', token),
+  refresh: () => apiPost<LoginResponse, Record<string, never>>('/auth/refresh', {}),
+  logout: () => apiPost<{ ok: true }, Record<string, never>>('/auth/logout', {}),
+  me: (_token?: string) => apiGet<AuthUser>('/auth/me'),
 };

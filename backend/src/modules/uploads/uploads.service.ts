@@ -9,8 +9,14 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const EXTENSIONS_BY_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
 
 @Injectable()
 export class UploadsService {
@@ -43,22 +49,32 @@ export class UploadsService {
     }
   }
 
-  validateFile(mimetype: string, size: number) {
+  validateFile(mimetype: string, size: number, buffer?: Buffer) {
     if (!ALLOWED_TYPES.includes(mimetype)) {
       throw new BadRequestException(`Tipo de archivo no permitido: ${mimetype}. Permitidos: ${ALLOWED_TYPES.join(', ')}`);
     }
     if (size > MAX_FILE_SIZE) {
       throw new BadRequestException(`Archivo demasiado grande: ${size} bytes. Maximo: ${MAX_FILE_SIZE}`);
     }
+    if (buffer && !this.matchesMagicBytes(mimetype, buffer)) {
+      throw new BadRequestException('El contenido del archivo no coincide con el tipo declarado');
+    }
   }
 
-  generateKey(tenantId: string, folder: string, filename: string) {
-    const ext = filename.split('.').pop() ?? 'jpg';
-    return `tenants/${tenantId}/${folder}/${randomUUID()}.${ext}`;
+  generateKey(tenantId: string, folder: string, mimetype: string) {
+    const ext = EXTENSIONS_BY_MIME[mimetype] ?? 'bin';
+    return `tenants/${tenantId}/${this.safeFolder(folder)}/${randomUUID()}.${ext}`;
   }
 
-  async getPresignedUploadUrl(tenantId: string, folder: string, filename: string, mimetype: string) {
-    const key = this.generateKey(tenantId, folder, filename);
+  safeFolder(folder: string | undefined) {
+    const value = folder?.trim().toLowerCase() || 'uploads';
+    if (!/^[a-z0-9/_-]{1,80}$/.test(value)) return 'uploads';
+    return value.replace(/^\/+|\/+$/g, '') || 'uploads';
+  }
+
+  async getPresignedUploadUrl(tenantId: string, folder: string, mimetype: string) {
+    this.validateFile(mimetype, 0);
+    const key = this.generateKey(tenantId, folder, mimetype);
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -97,8 +113,18 @@ export class UploadsService {
         Key: key,
         Body: buffer,
         ContentType: mimetype,
+        ContentDisposition: mimetype === 'application/pdf' ? 'attachment' : 'inline',
       }),
     );
     return { key, url: this.getPublicUrl(key) };
+  }
+
+  private matchesMagicBytes(mimetype: string, buffer: Buffer) {
+    if (buffer.length < 4) return false;
+    if (mimetype === 'image/jpeg') return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    if (mimetype === 'image/png') return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    if (mimetype === 'image/webp') return buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+    if (mimetype === 'application/pdf') return buffer.subarray(0, 4).toString('ascii') === '%PDF';
+    return false;
   }
 }

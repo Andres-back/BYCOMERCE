@@ -167,18 +167,19 @@
 
   .admin-shell-bg {
     background:
-      radial-gradient(circle at 18% 0%, color-mix(in oklch, var(--color-primary), transparent 92%) 0, transparent 32rem),
-      linear-gradient(180deg, color-mix(in oklch, var(--color-muted), transparent 58%), var(--color-background) 22rem);
+      radial-gradient(circle at 18% 0%, color-mix(in oklch, var(--color-primary), transparent 90%) 0, transparent 30rem),
+      radial-gradient(circle at 92% 8%, color-mix(in oklch, oklch(0.78 0.16 80), transparent 90%) 0, transparent 26rem),
+      linear-gradient(180deg, color-mix(in oklch, var(--color-muted), transparent 45%), var(--color-background) 24rem);
   }
 
   .admin-card {
-    @apply border border-border/80 bg-card text-card-foreground shadow-sm;
-    box-shadow: 0 12px 32px color-mix(in oklch, var(--color-foreground), transparent 94%);
+    @apply rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm;
+    box-shadow: 0 14px 34px color-mix(in oklch, var(--color-foreground), transparent 93%);
   }
 
   .admin-card-soft {
-    @apply border border-border/70 bg-card/95 text-card-foreground shadow-sm;
-    box-shadow: 0 10px 28px color-mix(in oklch, var(--color-foreground), transparent 95%);
+    @apply rounded-xl border border-border/70 bg-card/95 text-card-foreground shadow-sm;
+    box-shadow: 0 10px 24px color-mix(in oklch, var(--color-foreground), transparent 95%);
   }
 
   .admin-icon-soft {
@@ -192,6 +193,42 @@
     border-color: var(--color-border) !important;
     color: var(--color-card-foreground) !important;
     box-shadow: 0 18px 40px color-mix(in oklch, black, transparent 76%);
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select,
+  .dark [role="combobox"] {
+    color: var(--color-foreground);
+    background-color: color-mix(in oklch, var(--color-card), white 2%);
+    border-color: var(--color-border);
+  }
+
+  .dark button svg,
+  .dark a svg {
+    color: currentColor;
+  }
+
+  .cn-toast {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cn-toast::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--color-primary);
+    transform-origin: left;
+    animation: toast-progress 4.5s linear forwards;
+  }
+
+  @keyframes toast-progress {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
   }
 
   .scrollbar-thin {

@@ -16,7 +16,7 @@ interface RouteMapProps {
   onSelectOrder?: (id: string) => void;
 }
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as typeof L.Icon.Default.prototype & { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -80,5 +80,5 @@ export default function RouteMap({ business, orders, onSelectOrder }: RouteMapPr
     };
   }, [business, orders, onSelectOrder]);
 
-  return <div ref={mapRef} className="h-[500px] w-full rounded-lg border" />;
+  return <div ref={mapRef} className="h-[360px] w-full rounded-lg border lg:h-[420px]" />;
 }

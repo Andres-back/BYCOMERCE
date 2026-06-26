@@ -1,21 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 
 let globalSocket: Socket | null = null;
 
-function getSocket(token: string): Socket {
+function getSocket(): Socket {
   if (globalSocket?.connected) return globalSocket;
 
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001';
 
   globalSocket = io(wsUrl, {
-    auth: { token },
     transports: ['websocket', 'polling'],
+    withCredentials: true,
     reconnection: true,
     reconnectionDelay: 2000,
     reconnectionAttempts: 10,
@@ -25,27 +25,20 @@ function getSocket(token: string): Socket {
 }
 
 export function useSocket() {
-  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const qc = useQueryClient();
-  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
-    const socket = getSocket(token);
-    socketRef.current = socket;
+    const socket = getSocket();
 
     if (!socket.connected) {
       socket.connect();
     }
 
-    socket.on('connect', () => {
-      console.log('[WS] Connected');
-    });
-
-    socket.on('connected', (data: { userId: string; tenantId: string }) => {
-      console.log('[WS] Authenticated', data);
-    });
+    const handleConnect = () => undefined;
+    const handleConnected = () => undefined;
 
     const invalidateProducts = () => {
       qc.invalidateQueries({ queryKey: ['products'] });
@@ -67,15 +60,21 @@ export function useSocket() {
       qc.invalidateQueries({ queryKey: ['notifications'] });
     };
 
-    socket.on('order:created', (data) => {
+    const handleOrderCreated = () => {
       invalidateOrders();
-      toast.info('Nuevo pedido', { description: `Pedido recibido` });
-    });
+      appToast.info('Nuevo pedido', { id: 'socket-order-created', description: 'Pedido recibido' });
+    };
 
-    socket.on('order:status_changed', (data) => {
+    const handleOrderStatusChanged = () => {
       invalidateOrders();
-    });
+    };
 
+    const handleDisconnect = () => undefined;
+
+    socket.on('connect', handleConnect);
+    socket.on('connected', handleConnected);
+    socket.on('order:created', handleOrderCreated);
+    socket.on('order:status_changed', handleOrderStatusChanged);
     socket.on('product:updated', invalidateProducts);
     socket.on('stock:adjusted', invalidateProducts);
     socket.on('sale:created', invalidateSales);
@@ -83,21 +82,22 @@ export function useSocket() {
     socket.on('dashboard:refresh', invalidateDashboard);
     socket.on('notification', invalidateNotifications);
 
-    socket.on('disconnect', () => {
-      console.log('[WS] Disconnected');
-    });
+    socket.on('disconnect', handleDisconnect);
 
     return () => {
-      socket.off('order:created', invalidateOrders);
-      socket.off('order:status_changed', invalidateOrders);
+      socket.off('connect', handleConnect);
+      socket.off('connected', handleConnected);
+      socket.off('order:created', handleOrderCreated);
+      socket.off('order:status_changed', handleOrderStatusChanged);
       socket.off('product:updated', invalidateProducts);
       socket.off('stock:adjusted', invalidateProducts);
       socket.off('sale:created', invalidateSales);
       socket.off('sale:voided', invalidateSales);
       socket.off('dashboard:refresh', invalidateDashboard);
       socket.off('notification', invalidateNotifications);
+      socket.off('disconnect', handleDisconnect);
     };
-  }, [token, qc]);
+  }, [isAuthenticated, qc]);
 
-  return socketRef.current;
+  return globalSocket;
 }

@@ -140,7 +140,7 @@ export default function ReportsClient() {
     { title: 'Nuevos Clientes', value: formatNumber(kpis?.customersNew ?? 0), icon: UserPlus },
   ];
 
-  const dashboardTopProductsCols = useMemo<ColumnDef<typeof topProducts[number], any>[]>(() => [
+  const dashboardTopProductsCols = useMemo<ColumnDef<typeof topProducts[number], unknown>[]>(() => [
     { accessorKey: 'product.nombre', header: 'Producto', cell: ({ row }) => row.original.product?.nombre ?? row.original.productId.slice(0, 8) },
     { accessorKey: 'quantity', header: 'Vendidos', cell: ({ row }) => formatNumber(row.original.quantity) },
     { accessorKey: 'total', header: 'Ingresos', cell: ({ row }) => formatCopCentavos(row.original.total) },
@@ -153,37 +153,37 @@ export default function ReportsClient() {
     { title: 'Descuentos', value: formatCopCentavos(salesSummary?.descuento ?? 0), icon: TrendingUp },
   ];
 
-  const productsTopCols = useMemo<ColumnDef<typeof productsTop[number], any>[]>(() => [
+  const productsTopCols = useMemo<ColumnDef<typeof productsTop[number], unknown>[]>(() => [
     { accessorKey: 'product.nombre', header: 'Producto', cell: ({ row }) => row.original.product?.nombre ?? row.original.productId.slice(0, 8) },
     { accessorKey: 'quantity', header: 'Vendidos', cell: ({ row }) => formatNumber(row.original.quantity) },
     { accessorKey: 'total', header: 'Ingresos', cell: ({ row }) => formatCopCentavos(row.original.total) },
   ], []);
 
-  const noMovementCols = useMemo<ColumnDef<typeof noMovement[number], any>[]>(() => [
+  const noMovementCols = useMemo<ColumnDef<typeof noMovement[number], unknown>[]>(() => [
     { accessorKey: 'nombre', header: 'Producto' },
     { accessorKey: 'stock', header: 'Stock', cell: ({ row }) => formatNumber(row.original.stock) },
     { accessorKey: 'precio', header: 'Precio', cell: ({ row }) => formatCopCentavos(row.original.precio) },
   ], []);
 
-  const lowStockCols = useMemo<ColumnDef<typeof invLowStock[number], any>[]>(() => [
+  const lowStockCols = useMemo<ColumnDef<typeof invLowStock[number], unknown>[]>(() => [
     { accessorKey: 'nombre', header: 'Producto' },
     { accessorKey: 'stock', header: 'Stock', cell: ({ row }) => <span className="text-amber-600 font-medium">{formatNumber(row.original.stock)}</span> },
     { accessorKey: 'stockMinimo', header: 'Stock Mínimo', cell: ({ row }) => formatNumber(row.original.stockMinimo) },
   ], []);
 
-  const outOfStockCols = useMemo<ColumnDef<typeof invOutOfStock[number], any>[]>(() => [
+  const outOfStockCols = useMemo<ColumnDef<typeof invOutOfStock[number], unknown>[]>(() => [
     { accessorKey: 'nombre', header: 'Producto' },
     { accessorKey: 'stock', header: 'Stock', cell: () => <Badge variant="destructive">Agotado</Badge> },
   ], []);
 
-  const movementCols = useMemo<ColumnDef<typeof recentMovements[number], any>[]>(() => [
+  const movementCols = useMemo<ColumnDef<typeof recentMovements[number], unknown>[]>(() => [
     { accessorKey: 'fecha', header: 'Fecha', cell: ({ row }) => formatDate(row.original.fecha) },
     { accessorKey: 'product.nombre', header: 'Producto', cell: ({ row }) => row.original.product?.nombre ?? '-' },
     { accessorKey: 'tipo', header: 'Tipo', cell: ({ row }) => movementTypeLabels[row.original.tipo] ?? row.original.tipo },
     { accessorKey: 'cantidad', header: 'Cantidad', cell: ({ row }) => formatNumber(row.original.cantidad) },
   ], []);
 
-  const topCustomersCols = useMemo<ColumnDef<typeof topCustomers[number], any>[]>(() => [
+  const topCustomersCols = useMemo<ColumnDef<typeof topCustomers[number], unknown>[]>(() => [
     { accessorKey: 'customer.nombre', header: 'Cliente', cell: ({ row }) => row.original.customer?.nombre ?? 'Anónimo' },
     { accessorKey: 'purchases', header: 'Compras', cell: ({ row }) => formatNumber(row.original.purchases) },
     { accessorKey: 'total', header: 'Total Gastado', cell: ({ row }) => formatCopCentavos(row.original.total) },

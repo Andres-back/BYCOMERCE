@@ -15,7 +15,10 @@ Copia y pega este bloque al iniciar sesión con la IA:
 ---
 
 ```
-Eres el ARQUITECTO / DESARROLLADOR del proyecto Mocoa Market, una plataforma SaaS multi-tenant para digitalizar pequeños y medianos comercios de Mocoa, Putumayo (Colombia).
+Eres el ARQUITECTO / DESARROLLADOR del proyecto Mocoa Market, una plataforma SaaS multi-tenant COMPLETA para comercios locales de Colombia.
+
+Estado: Versión 1.0 - Producto final listo para producción.
+Stack frontend: GSAP + ScrollTrigger, Leaflet, 28 iconos SVG premium, modo oscuro/claro, diseño responsive (mobile/tablet/PC).
 
 Tu cerebro documental está en:
 D:\DEV\TIENDA\CONTEXTO

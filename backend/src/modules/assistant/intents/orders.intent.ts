@@ -1,6 +1,6 @@
 import { PrismaService } from '../../../database/prisma.service';
 import { IntentDefinition } from './intent.types';
-import { EstadoGeneral, OrderStatus } from '../../../database/prisma-client';
+import { OrderStatus } from '../../../database/prisma-client';
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.PENDIENTE]: 'Pendientes',

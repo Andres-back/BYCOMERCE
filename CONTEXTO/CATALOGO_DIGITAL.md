@@ -69,6 +69,14 @@ Mostrar:
 
 Cada tipo de negocio tendrá una plantilla especializada.
 
+Implementacion actual:
+
+- La ruta `/negocio/[slug]` clasifica `tipoNegocio` en comida, moda, calzado, belleza, joyeria, tienda o generico.
+- Cada plantilla ajusta iconografia, copy, jerarquia del hero, productos destacados y paleta por defecto.
+- La paleta final puede venir de `BusinessSettings` o de sugerencia IA aplicada desde logo/banner.
+- La vitrina mantiene una sola fuente de verdad: productos, stock y precios provienen de Inventario.
+- WhatsApp sigue siendo el canal principal de contacto y confirmacion.
+
 ---
 
 ## Zapatería

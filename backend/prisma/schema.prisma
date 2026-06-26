@@ -94,6 +94,13 @@ enum PaymentStatus {
   REVERSADO
 }
 
+enum PurchasePaymentStatus {
+  PENDIENTE
+  PAGADA
+  VENCIDA
+  PARCIAL
+}
+
 model Tenant {
   id            String        @id @default(uuid())
   nombre        String
@@ -134,6 +141,7 @@ model Tenant {
   orders            Order[]
   deliveryConfig    DeliveryConfig?
   businessSettings  BusinessSettings?
+  aiSettings        TenantAiSettings?
   businessImages    BusinessImage[]
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
@@ -423,15 +431,24 @@ model Supplier {
 }
 
 model Purchase {
-  id            String        @id @default(uuid())
-  tenantId      String        @map("tenant_id")
-  supplierId    String?       @map("supplier_id")
-  numeroFactura String?       @map("numero_factura")
-  total         Int
-  fechaCompra   DateTime      @map("fecha_compra")
-  observaciones String?
-  estado        EstadoGeneral @default(ACTIVO)
-  createdAt     DateTime      @default(now()) @map("created_at")
+  id              String                @id @default(uuid())
+  tenantId        String                @map("tenant_id")
+  supplierId      String?               @map("supplier_id")
+  numeroFactura   String?               @map("numero_factura")
+  total           Int
+  fechaCompra     DateTime              @map("fecha_compra")
+  fechaVencimiento DateTime?            @map("fecha_vencimiento")
+  estadoPago      PurchasePaymentStatus @default(PENDIENTE) @map("estado_pago")
+  facturaUrl      String?               @map("factura_url")
+  facturaKey      String?               @map("factura_key")
+  facturaNombre   String?               @map("factura_nombre")
+  facturaMime     String?               @map("factura_mime")
+  facturaOcrTexto String?               @map("factura_ocr_texto")
+  facturaOcrJson  Json?                 @map("factura_ocr_json")
+  observaciones   String?
+  estado          EstadoGeneral         @default(ACTIVO)
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
 
   tenant   Tenant         @relation(fields: [tenantId], references: [id])
   supplier Supplier?      @relation(fields: [supplierId], references: [id])
@@ -440,6 +457,8 @@ model Purchase {
   @@index([tenantId, id])
   @@index([tenantId, supplierId])
   @@index([tenantId, estado])
+  @@index([tenantId, estadoPago])
+  @@index([tenantId, fechaVencimiento])
   @@map("purchases")
 }
 
@@ -661,14 +680,18 @@ model SalePayment {
 }
 
 model Expense {
-  id             String   @id @default(uuid())
-  tenantId       String   @map("tenant_id")
-  usuarioId      String   @map("usuario_id")
-  categoria      String
-  descripcion    String
-  valor          Int
-  comprobanteUrl String?  @map("comprobante_url")
-  fecha          DateTime @default(now())
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  usuarioId         String   @map("usuario_id")
+  categoria         String
+  descripcion       String
+  valor             Int
+  comprobanteUrl    String?  @map("comprobante_url")
+  comprobanteNombre String?  @map("comprobante_nombre")
+  comprobanteMime   String?  @map("comprobante_mime")
+  comprobanteIaTexto String? @map("comprobante_ia_texto")
+  comprobanteIaJson Json?    @map("comprobante_ia_json")
+  fecha             DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
@@ -768,6 +791,27 @@ model BusinessSettings {
 
   @@index([tenantId, id])
   @@map("business_settings")
+}
+
+model TenantAiSettings {
+  id                 String   @id @default(uuid())
+  tenantId           String   @unique @map("tenant_id")
+  assistantEnabled   Boolean  @default(false) @map("assistant_enabled")
+  visionEnabled      Boolean  @default(false) @map("vision_enabled")
+  enterpriseIncluded Boolean  @default(false) @map("enterprise_included")
+  visionProvider     String   @default("OLLAMA") @map("vision_provider")
+  groqApiKeyEnc      String?  @map("groq_api_key_enc")
+  groqModel          String?  @default("llama-3.3-70b-versatile") @map("groq_model")
+  groqVisionModel    String?  @default("meta-llama/llama-4-scout-17b-16e-instruct") @map("groq_vision_model")
+  ollamaUrl          String?  @map("ollama_url")
+  ollamaVisionModel  String?  @default("llava:latest") @map("ollama_vision_model")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, id])
+  @@map("tenant_ai_settings")
 }
 
 model BusinessImage {

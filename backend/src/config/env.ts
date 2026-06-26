@@ -12,5 +12,12 @@ export const env = () => ({
     refreshTtl: Number(process.env.JWT_REFRESH_TTL ?? 604800),
   },
   bcryptCost: Number(process.env.BCRYPT_COST ?? 12),
+  ai: {
+    encryptionKey: process.env.AI_SECRET_ENCRYPTION_KEY,
+    groqApiKey: process.env.GROQ_API_KEY,
+    groqModel: process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile',
+    groqVisionModel: process.env.GROQ_VISION_MODEL ?? 'meta-llama/llama-4-scout-17b-16e-instruct',
+    ollamaUrl: process.env.OLLAMA_URL ?? 'http://localhost:11434',
+    ollamaVisionModel: process.env.OLLAMA_VISION_MODEL ?? 'llava:latest',
+  },
 });
-

@@ -41,7 +41,9 @@ interface CartItem {
 
 const checkoutSchema = z.object({
   customerName: z.string().min(2, 'Ingresa tu nombre'),
-  customerPhone: z.string().min(6, 'Ingresa tu telefono'),
+  customerPhone: z.string()
+    .min(7, 'Ingresa un telefono valido')
+    .refine((value) => value.replace(/\D/g, '').length >= 10, 'Ingresa un telefono con al menos 10 digitos'),
   direccion: z.string().min(5, 'Ingresa tu direccion'),
   observaciones: z.string().optional(),
 });
@@ -93,6 +95,14 @@ export function CatalogClient({
     ],
     [products],
   );
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { Todas: products.length };
+    for (const product of products) {
+      const name = product.category?.nombre;
+      if (name) counts[name] = (counts[name] ?? 0) + 1;
+    }
+    return counts;
+  }, [products]);
 
   const visibleProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -203,7 +213,10 @@ export function CatalogClient({
                     onClick={() => setCategory(item)}
                     style={category === item ? { background: primaryColor, color: 'white', borderColor: primaryColor } : undefined}
                   >
-                    {item}
+                    {item}{' '}
+                    <span className="ml-1 rounded-full bg-background/20 px-1.5 text-[10px]">
+                      {categoryCounts[item] ?? 0}
+                    </span>
                   </Button>
                 ))}
               </div>
@@ -216,14 +229,14 @@ export function CatalogClient({
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {visibleProducts.map((product) => (
-                  <Card key={product.id} size="sm">
-                    <div className="relative h-40 w-full bg-muted">
+                  <Card key={product.id} size="sm" className="group overflow-hidden border-border/80 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="relative h-44 w-full bg-muted">
                       {product.imagenPrincipal ? (
                         <Image
                           src={product.imagenPrincipal}
                           alt={product.nombre}
                           fill
-                          className="rounded-t-xl object-cover"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                           unoptimized
                         />
                       ) : (
@@ -231,11 +244,15 @@ export function CatalogClient({
                           Sin imagen
                         </div>
                       )}
+                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
                       {product.destacado && (
                         <Badge className="absolute top-2 left-2 bg-amber-500 text-white hover:bg-amber-500">
                           Destacado
                         </Badge>
                       )}
+                      <Badge className="absolute right-2 top-2 border-0 text-white" style={{ background: primaryColor }}>
+                        {product.stock > 0 ? 'Disponible' : 'Agotado'}
+                      </Badge>
                     </div>
                     <CardContent className="space-y-2 pt-4">
                       <div className="flex items-center justify-between">
@@ -275,11 +292,11 @@ export function CatalogClient({
                       )}
                       <Button
                         type="button"
-                        variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full text-white"
                         onClick={() => addProduct(product)}
                         disabled={product.stock <= 0}
+                        style={{ background: product.stock > 0 ? primaryColor : undefined }}
                       >
                         <Plus className="size-4" /> Agregar
                       </Button>
@@ -357,23 +374,27 @@ export function CatalogClient({
                   )}
 
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                      <p className="font-bold">Identificacion del cliente</p>
+                      <p className="mt-1">Para evitar pedidos falsos, confirma tus datos solo cuando el carrito este listo.</p>
+                    </div>
                     <div className="space-y-1">
                       <Label htmlFor="customerName">Nombre</Label>
-                      <Input id="customerName" {...form.register('customerName')} />
+                      <Input id="customerName" autoComplete="name" {...form.register('customerName')} />
                       {form.formState.errors.customerName && (
                         <p className="text-xs text-destructive">{form.formState.errors.customerName.message}</p>
                       )}
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="customerPhone">Telefono</Label>
-                      <Input id="customerPhone" {...form.register('customerPhone')} />
+                      <Input id="customerPhone" type="tel" inputMode="tel" autoComplete="tel" placeholder="300 000 0000" {...form.register('customerPhone')} />
                       {form.formState.errors.customerPhone && (
                         <p className="text-xs text-destructive">{form.formState.errors.customerPhone.message}</p>
                       )}
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="direccion">Direccion</Label>
-                      <Input id="direccion" {...form.register('direccion')} />
+                      <Input id="direccion" autoComplete="street-address" {...form.register('direccion')} />
                       {form.formState.errors.direccion && (
                         <p className="text-xs text-destructive">{form.formState.errors.direccion.message}</p>
                       )}
@@ -482,10 +503,15 @@ export function CatalogClient({
           {items.length > 0 && (
             <div className="border-t p-4">
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p className="font-bold">Identificacion del cliente</p>
+                  <p className="mt-1">Tus datos se piden al final para que el comercio pueda validar el pedido.</p>
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="mobile-customerName" className="text-sm">Nombre</Label>
                   <Input
                     id="mobile-customerName"
+                    autoComplete="name"
                     {...form.register('customerName')}
                     placeholder="Tu nombre"
                   />
@@ -497,8 +523,11 @@ export function CatalogClient({
                   <Label htmlFor="mobile-customerPhone" className="text-sm">Telefono</Label>
                   <Input
                     id="mobile-customerPhone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     {...form.register('customerPhone')}
-                    placeholder="Tu telefono"
+                    placeholder="300 000 0000"
                   />
                   {form.formState.errors.customerPhone && (
                     <p className="text-xs text-destructive">{form.formState.errors.customerPhone.message}</p>
@@ -508,6 +537,7 @@ export function CatalogClient({
                   <Label htmlFor="mobile-direccion" className="text-sm">Direccion</Label>
                   <Input
                     id="mobile-direccion"
+                    autoComplete="street-address"
                     {...form.register('direccion')}
                     placeholder="Tu direccion"
                   />

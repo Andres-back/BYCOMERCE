@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
@@ -72,7 +72,6 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const token = useAuthStore((s) => s.token);
   const isSuperAdmin = useAuthStore((s) => s.user?.rol === 'SUPER_ADMIN');
-  const [mounted, setMounted] = useState(false);
   const shouldApplyBusinessTheme = !pathname?.startsWith('/admin');
 
   const enabled = !!token && !isSuperAdmin;
@@ -83,8 +82,6 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     enabled,
     staleTime: 5 * 60 * 1000,
   });
-
-  useEffect(() => { setMounted(true); }, []);
 
   const value = useMemo<BrandingContextValue>(() => {
     if (!business) return { ...DEFAULT, isLoading };
@@ -107,7 +104,6 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   }, [business, isLoading]);
 
   useEffect(() => {
-    if (!mounted) return;
     const root = document.documentElement;
     root.style.setProperty('--brand-primary', value.primaryColor);
     root.style.setProperty('--brand-primary-hsl', hexToHsl(value.primaryColor));
@@ -122,7 +118,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       root.classList.toggle('dark', dark);
     }
-  }, [mounted, shouldApplyBusinessTheme, value.primaryColor, value.secondaryColor, value.accentColor, value.font, value.theme]);
+  }, [shouldApplyBusinessTheme, value.primaryColor, value.secondaryColor, value.accentColor, value.font, value.theme]);
 
   return <BrandingContext.Provider value={value}>{children}</BrandingContext.Provider>;
 }

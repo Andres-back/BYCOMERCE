@@ -1,5 +1,5 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api/client';
-import { Business, BusinessImage } from '@/types/api';
+import { BrandingSuggestionResult, Business, BusinessImage, TenantAiSettings, VisionProvider } from '@/types/api';
 
 export interface UpdateBusinessProfileInput {
   nombre?: string;
@@ -35,6 +35,35 @@ export interface UpdateBusinessProfileInput {
   deliveryHorarioFin?: string;
 }
 
+export interface UpdateTenantAiSettingsInput {
+  assistantEnabled?: boolean;
+  visionEnabled?: boolean;
+  visionProvider?: VisionProvider;
+  groqApiKey?: string;
+  clearGroqApiKey?: boolean;
+  groqModel?: string;
+  groqVisionModel?: string;
+  ollamaUrl?: string;
+  ollamaVisionModel?: string;
+}
+
+export interface BrandingSuggestionInput {
+  fileBase64: string;
+  mimeType: string;
+  fileName?: string;
+  model?: string;
+  tipoNegocio?: string;
+}
+
+export interface BrandingSuggestionResponse {
+  suggestion: BrandingSuggestionResult;
+  applied: {
+    colorPrimario?: string | null;
+    colorSecundario?: string | null;
+    colorAcento?: string | null;
+  } | null;
+}
+
 export interface CreateBusinessImageInput {
   url: string;
   titulo?: string;
@@ -54,6 +83,22 @@ export function getBusinessProfile(token: string) {
 
 export function updateBusinessProfile(token: string, input: UpdateBusinessProfileInput) {
   return apiPatch<Business, UpdateBusinessProfileInput>('/tenant/profile', input, token);
+}
+
+export function getTenantAiSettings(token: string) {
+  return apiGet<TenantAiSettings>('/tenants/me/ai-settings', token);
+}
+
+export function updateTenantAiSettings(token: string, input: UpdateTenantAiSettingsInput) {
+  return apiPatch<TenantAiSettings, UpdateTenantAiSettingsInput>('/tenants/me/ai-settings', input, token);
+}
+
+export function suggestBrandingFromImage(token: string, input: BrandingSuggestionInput) {
+  return apiPost<BrandingSuggestionResponse, BrandingSuggestionInput>(
+    '/tenants/me/ai/branding/suggest',
+    input,
+    token,
+  );
 }
 
 export function listGallery(token: string) {

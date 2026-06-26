@@ -10,6 +10,7 @@ import { RoleName } from '../../../database/prisma-client';
 import { Request } from 'express';
 import { RequestUser } from '../../../common/types/request-user';
 import { TenantContextService } from '../../../database/tenant-context.service';
+import { ACCESS_COOKIE, getCookie } from '../../../common/security/cookies';
 
 type JwtPayload = {
   sub: string;
@@ -33,11 +34,13 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const authHeader = request.header('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : undefined;
+    const token = getCookie(request, ACCESS_COOKIE) ?? bearerToken;
+
+    if (!token) {
       throw new UnauthorizedException('Token requerido');
     }
 
-    const token = authHeader.slice('Bearer '.length);
     const payload = await this.jwt.verifyAsync<JwtPayload>(token, {
       secret: this.config.get<string>('jwt.accessSecret'),
     });

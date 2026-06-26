@@ -1,16 +1,103 @@
-import { MessageCircle, MapPin, Phone, Clock, Truck, Globe, Facebook, Instagram } from 'lucide-react';
+import {
+  Clock,
+  Facebook,
+  Gem,
+  Globe,
+  Instagram,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Store,
+  Truck,
+  Utensils,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-  getBusiness,
-  listBusinessProducts,
-} from '@/services/marketplace/marketplace.service';
 import { Badge } from '@/components/ui/badge';
+import { getBusiness, listBusinessProducts } from '@/services/marketplace/marketplace.service';
 import { CatalogClient } from './catalog-client';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+}
+
+function classifyBusiness(type: string) {
+  const value = type.toLowerCase();
+  if (/(restaurante|comida|cafe|cafeter|panader|bar|gastro|menu)/.test(value)) return 'food';
+  if (/(ropa|vestido|moda|boutique|textil)/.test(value)) return 'fashion';
+  if (/(zapato|calzado|tenis|sneaker)/.test(value)) return 'shoes';
+  if (/(maquillaje|belleza|cosmetic|spa|unas)/.test(value)) return 'beauty';
+  if (/(joya|joyer|accesorio|reloj)/.test(value)) return 'jewelry';
+  if (/(tienda|mercado|super|abarrote|licor|farmacia)/.test(value)) return 'store';
+  return 'generic';
+}
+
+function templateFor(type: string) {
+  const kind = classifyBusiness(type);
+  const templates = {
+    food: {
+      Icon: Utensils,
+      eyebrow: 'Menu fresco y pedidos directos',
+      title: 'Sabores listos para pedir',
+      subtitle: 'Explora el menu, arma tu pedido y confirma disponibilidad por WhatsApp.',
+      defaultColors: ['#0f766e', '#b45309', '#ef4444'],
+      productLabel: 'Platos y combos destacados',
+    },
+    fashion: {
+      Icon: Shirt,
+      eyebrow: 'Colecciones seleccionadas',
+      title: 'Moda con estilo propio',
+      subtitle: 'Descubre prendas, tallas y referencias conectadas al inventario real.',
+      defaultColors: ['#be123c', '#111827', '#f59e0b'],
+      productLabel: 'Coleccion destacada',
+    },
+    shoes: {
+      Icon: ShoppingBag,
+      eyebrow: 'Calzado disponible hoy',
+      title: 'Encuentra tu proximo par',
+      subtitle: 'Consulta tallas, modelos y marcas con stock actualizado.',
+      defaultColors: ['#1d4ed8', '#111827', '#f97316'],
+      productLabel: 'Modelos destacados',
+    },
+    beauty: {
+      Icon: Sparkles,
+      eyebrow: 'Belleza y cuidado personal',
+      title: 'Productos para tu rutina',
+      subtitle: 'Explora tonos, marcas y disponibilidad antes de escribir.',
+      defaultColors: ['#c026d3', '#831843', '#14b8a6'],
+      productLabel: 'Favoritos de belleza',
+    },
+    jewelry: {
+      Icon: Gem,
+      eyebrow: 'Detalles con brillo',
+      title: 'Piezas para regalar o estrenar',
+      subtitle: 'Mira materiales, referencias y productos seleccionados por el comercio.',
+      defaultColors: ['#92400e', '#111827', '#d97706'],
+      productLabel: 'Piezas destacadas',
+    },
+    store: {
+      Icon: Store,
+      eyebrow: 'Compra local sin vueltas',
+      title: 'Todo lo esencial en un catalogo',
+      subtitle: 'Busca productos, revisa stock y coordina compra o recogida con la tienda.',
+      defaultColors: ['#0d9488', '#334155', '#f59e0b'],
+      productLabel: 'Productos populares',
+    },
+    generic: {
+      Icon: Store,
+      eyebrow: 'Catalogo conectado al inventario',
+      title: 'Compra directo con el comercio',
+      subtitle: 'Consulta productos, precios y disponibilidad desde una vitrina actualizada.',
+      defaultColors: ['#0d9488', '#1f2937', '#f59e0b'],
+      productLabel: 'Destacados',
+    },
+  } as const;
+  return templates[kind];
 }
 
 export default async function BusinessPage({ params }: PageProps) {
@@ -20,18 +107,29 @@ export default async function BusinessPage({ params }: PageProps) {
 
   const products = await listBusinessProducts(slug).catch(() => []);
   const bs = business.businessSettings;
-  const whatsapp = business.whatsapp ?? bs?.whatsapp;
-  const banner = bs?.banner;
-  const logo = bs?.logo ?? business.logo;
-  const primary = bs?.colorPrimario ?? '#0d9488';
-  const secondary = bs?.colorSecundario ?? '#0f766e';
-  const accent = bs?.colorAcento ?? '#f59e0b';
+  const template = templateFor(business.tipoNegocio);
+  const Icon = template.Icon;
+  const [fallbackPrimary, fallbackSecondary, fallbackAccent] = template.defaultColors;
+  const primary = bs?.colorPrimario ?? fallbackPrimary;
+  const secondary = bs?.colorSecundario ?? fallbackSecondary;
+  const accent = bs?.colorAcento ?? fallbackAccent;
   const font = bs?.fuente ?? 'Inter';
+  const whatsapp = business.whatsapp ?? bs?.whatsapp;
+  const logo = bs?.logo ?? business.logo;
+  const gallery = business.businessImages ?? [];
   const showPrices = bs?.mostrarPrecios ?? true;
   const showStock = bs?.mostrarStock ?? true;
   const eslogan = bs?.eslogan ?? business.eslogan ?? null;
   const textoBienvenida = bs?.textoBienvenida ?? null;
-  const gallery = business.businessImages ?? [];
+  const heroImage =
+    bs?.banner ||
+    gallery[0]?.url ||
+    products.find((product) => product.imagenPrincipal)?.imagenPrincipal ||
+    null;
+  const featuredProducts = [
+    ...products.filter((product) => product.destacado),
+    ...products.filter((product) => !product.destacado),
+  ].slice(0, 3);
 
   const whatsappHref = whatsapp
     ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola ${business.nombre}, quiero consultar productos del catalogo.`)}`
@@ -39,145 +137,137 @@ export default async function BusinessPage({ params }: PageProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            {logo && (
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt={business.nombre} className="size-8 rounded-lg object-cover" />
+              <img src={logo} alt={business.nombre} className="size-9 rounded-lg object-cover" />
+            ) : (
+              <div className="flex size-9 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: primary }}>
+                {business.nombre.slice(0, 2).toUpperCase()}
+              </div>
             )}
-            <span className="text-lg font-bold tracking-tight" style={{ fontFamily: font, color: primary }}>
+            <span className="truncate text-base font-bold" style={{ fontFamily: font, color: primary }}>
               {business.nombre}
             </span>
           </div>
-          <nav className="flex items-center gap-3">
+          <nav className="flex shrink-0 items-center gap-2">
+            <Link href="/marketplace" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
+              Marketplace
+            </Link>
             {whatsappHref && (
               <a
                 href={whatsappHref}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-white hover:opacity-90"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-white hover:opacity-90"
                 style={{ background: primary }}
               >
                 <MessageCircle className="size-4" /> WhatsApp
               </a>
             )}
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              Volver al marketplace
-            </Link>
           </nav>
         </div>
       </header>
 
       <section
-        className={
-          banner
-            ? 'relative bg-cover bg-center py-16 md:py-24'
-            : 'border-b py-16 md:py-20'
-        }
+        className="relative min-h-[72vh] overflow-hidden"
         style={
-          banner
-            ? { backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.72), rgba(0,0,0,0.24)), url(${banner})` }
-            : { background: `linear-gradient(135deg, ${primary}15, ${secondary}10)` }
+          heroImage
+            ? { backgroundImage: `linear-gradient(90deg, rgba(8,13,23,0.88), rgba(8,13,23,0.34)), url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { background: `linear-gradient(135deg, ${primary}, ${secondary})` }
         }
       >
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-            {logo ? (
-              <Image
-                src={logo}
-                alt={business.nombre}
-                width={80}
-                height={80}
-                className="rounded-full border-2 border-white/30 shadow-md"
-                unoptimized
-              />
-            ) : (
-              <div
-                className="flex size-20 items-center justify-center rounded-full text-2xl font-bold text-white shadow-md"
-                style={{ background: primary, fontFamily: font }}
+        <div className="mx-auto grid min-h-[72vh] max-w-7xl items-center gap-10 px-4 py-12 lg:grid-cols-[1fr_420px]">
+          <div className="max-w-3xl text-white">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-medium">
+              <Icon className="size-3.5" /> {template.eyebrow}
+            </div>
+            <h1 className="text-4xl font-bold leading-tight md:text-6xl" style={{ fontFamily: font }}>
+              {business.nombre}
+            </h1>
+            <p className="mt-4 max-w-2xl text-lg text-white/88">
+              {eslogan || textoBienvenida || template.title}. {template.subtitle}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {whatsappHref && (
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-lg hover:opacity-90"
+                  style={{ background: primary }}
+                >
+                  <MessageCircle className="size-4" /> Pedir por WhatsApp
+                </a>
+              )}
+              <a
+                href="#catalogo"
+                className="inline-flex h-11 items-center gap-2 rounded-lg border border-white/35 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur hover:bg-white/18"
               >
-                {business.nombre.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className={banner ? 'text-white' : ''}>
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Badge variant={banner ? 'outline' : 'secondary'} className={banner ? 'border-white/30 text-white' : ''}>
-                  {business.tipoNegocio}
-                </Badge>
-                {business.deliveryConfig?.activo && (
-                  <Badge variant={banner ? 'outline' : 'default'} className={banner ? 'border-white/30 text-white' : ''}>
-                    <Truck className="mr-1 size-3" /> Domicilio
-                  </Badge>
-                )}
-              </div>
-              <h1 className="text-3xl font-bold md:text-4xl" style={{ fontFamily: font }}>{business.nombre}</h1>
-              {eslogan && (
-                <p className={`mt-1 text-base italic ${banner ? 'text-white/90' : 'text-muted-foreground'}`} style={{ fontFamily: font }}>
-                  {eslogan}
-                </p>
-              )}
-              {business.direccion && (
-                <p className={`mt-2 flex items-center gap-1 text-sm ${banner ? 'text-white/80' : 'text-muted-foreground'}`}>
-                  <MapPin className="size-4" /> {business.direccion}{business.barrio ? `, ${business.barrio}` : ''} - {business.ciudad}
-                </p>
-              )}
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                {business.telefono && (
-                  <a href={`tel:${business.telefono}`} className={`flex items-center gap-1 text-sm ${banner ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}>
-                    <Phone className="size-3.5" /> {business.telefono}
-                  </a>
-                )}
-                {business.deliveryConfig?.horarioInicio && business.deliveryConfig.horarioFin && (
-                  <span className={`flex items-center gap-1 text-sm ${banner ? 'text-white/70' : 'text-muted-foreground'}`}>
-                    <Clock className="size-3.5" /> {business.deliveryConfig.horarioInicio} - {business.deliveryConfig.horarioFin}
-                  </span>
-                )}
-              </div>
-              {(bs?.facebook || bs?.instagram || bs?.tiktok || bs?.sitioWeb) && (
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  {bs?.facebook && (
-                    <a href={bs.facebook.startsWith('http') ? bs.facebook : `https://facebook.com/${bs.facebook}`} target="_blank" rel="noreferrer" className={banner ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}>
-                      <Facebook className="size-4" />
-                    </a>
-                  )}
-                  {bs?.instagram && (
-                    <a href={bs.instagram.startsWith('http') ? bs.instagram : `https://instagram.com/${bs.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className={banner ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}>
-                      <Instagram className="size-4" />
-                    </a>
-                  )}
-                  {bs?.sitioWeb && (
-                    <a href={bs.sitioWeb.startsWith('http') ? bs.sitioWeb : `https://${bs.sitioWeb}`} target="_blank" rel="noreferrer" className={`flex items-center gap-1 text-sm ${banner ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}>
-                      <Globe className="size-3.5" /> Web
-                    </a>
-                  )}
-                </div>
-              )}
+                Ver catalogo
+              </a>
+            </div>
+            <div className="mt-7 flex flex-wrap items-center gap-3 text-sm text-white/78">
+              <span className="inline-flex items-center gap-1"><Store className="size-4" /> {business.tipoNegocio}</span>
+              {business.direccion && <span className="inline-flex items-center gap-1"><MapPin className="size-4" /> {business.barrio || business.ciudad}</span>}
+              {business.deliveryConfig?.activo && <span className="inline-flex items-center gap-1"><Truck className="size-4" /> Domicilio</span>}
+              {showStock && <span className="inline-flex items-center gap-1"><Star className="size-4" /> Stock en vivo</span>}
             </div>
           </div>
 
-          {textoBienvenida && (
-            <p className={`mt-4 max-w-2xl text-sm ${banner ? 'text-white/80' : 'text-muted-foreground'}`}>
-              {textoBienvenida}
-            </p>
+          {featuredProducts.length > 0 && (
+            <div className="grid gap-3">
+              <p className="text-sm font-semibold text-white/80">{template.productLabel}</p>
+              {featuredProducts.map((product) => (
+                <div key={product.id} className="flex items-center gap-3 rounded-lg border border-white/18 bg-white/14 p-3 text-white backdrop-blur">
+                  <div className="relative size-16 overflow-hidden rounded-md bg-white/15">
+                    {product.imagenPrincipal ? (
+                      <Image src={product.imagenPrincipal} alt={product.nombre} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs">Sin foto</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{product.nombre}</p>
+                    {product.category?.nombre && <p className="text-xs text-white/65">{product.category.nombre}</p>}
+                  </div>
+                  {showPrices && <Badge className="border-white/20 bg-white/16 text-white hover:bg-white/16">Disponible</Badge>}
+                </div>
+              ))}
+            </div>
           )}
+        </div>
+      </section>
 
-          <div className={`mt-4 flex flex-wrap gap-3 ${banner ? 'text-white/70' : 'text-muted-foreground'}`}>
-            <span className="text-sm">{products.length} productos disponibles</span>
-            {business.deliveryConfig?.activo && (
-              <span className="text-sm">Domicilio hasta {business.deliveryConfig.radioKm} km</span>
-            )}
-            {!showPrices && <Badge variant="outline" className={banner ? 'border-white/30 text-white' : ''}>Solo cotización</Badge>}
-            {showStock && <Badge variant="outline" className={banner ? 'border-white/30 text-white' : ''}>Stock en vivo</Badge>}
-          </div>
+      <section className="border-b bg-background">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 md:grid-cols-3">
+          {business.direccion && (
+            <div className="flex items-start gap-2 text-sm">
+              <MapPin className="mt-0.5 size-4" style={{ color: primary }} />
+              <span>{business.direccion}{business.barrio ? `, ${business.barrio}` : ''} - {business.ciudad}</span>
+            </div>
+          )}
+          {business.telefono && (
+            <a href={`tel:${business.telefono}`} className="flex items-start gap-2 text-sm hover:text-primary">
+              <Phone className="mt-0.5 size-4" style={{ color: primary }} /> {business.telefono}
+            </a>
+          )}
+          {business.deliveryConfig?.horarioInicio && business.deliveryConfig.horarioFin && (
+            <div className="flex items-start gap-2 text-sm">
+              <Clock className="mt-0.5 size-4" style={{ color: primary }} />
+              {business.deliveryConfig.horarioInicio} - {business.deliveryConfig.horarioFin}
+            </div>
+          )}
         </div>
       </section>
 
       {gallery.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-6">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-            {gallery.slice(0, 8).map((img) => (
-              <div key={img.id} className="overflow-hidden rounded-lg">
+        <section className="mx-auto max-w-7xl px-4 py-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {gallery.slice(0, 8).map((img, index) => (
+              <div key={img.id} className={index === 0 ? 'col-span-2 row-span-2 overflow-hidden rounded-lg' : 'overflow-hidden rounded-lg'}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={img.url} alt={img.titulo ?? business.nombre} className="aspect-square h-full w-full object-cover transition-transform hover:scale-105" />
               </div>
@@ -186,29 +276,31 @@ export default async function BusinessPage({ params }: PageProps) {
         </section>
       )}
 
-      <CatalogClient
-        business={business}
-        products={products}
-        primaryColor={primary}
-        accentColor={accent}
-        font={font}
-        showPrices={showPrices}
-        showStock={showStock}
-      />
+      <div id="catalogo">
+        <CatalogClient
+          business={business}
+          products={products}
+          primaryColor={primary}
+          accentColor={accent}
+          font={font}
+          showPrices={showPrices}
+          showStock={showStock}
+        />
+      </div>
 
       {whatsappHref && (
-        <section className="mx-auto max-w-6xl px-4 py-12">
-          <div className="rounded-xl border bg-card p-8 text-center shadow-sm">
-            <MessageCircle className="mx-auto size-10" style={{ color: primary }} />
-            <h2 className="mt-4 text-xl font-bold" style={{ fontFamily: font }}>Contacta a {business.nombre}</h2>
-            <p className="mt-2 text-muted-foreground">
-              Haz tu pedido o consulta disponibilidad directamente por WhatsApp
-            </p>
+        <section className="border-t py-12" style={{ background: `${primary}12` }}>
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 text-center md:flex-row md:items-center md:justify-between md:text-left">
+            <div>
+              <h2 className="text-2xl font-bold" style={{ fontFamily: font }}>Compra directo con {business.nombre}</h2>
+              <p className="mt-1 text-muted-foreground">Confirma disponibilidad, domicilio o recogida en el local por WhatsApp.</p>
+            </div>
             <a
               href={whatsappHref}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-green-600 px-6 text-sm font-medium text-white hover:bg-green-700"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg px-6 text-sm font-semibold text-white hover:opacity-90"
+              style={{ background: primary }}
             >
               <MessageCircle className="size-4" /> Escribir por WhatsApp
             </a>
@@ -216,8 +308,30 @@ export default async function BusinessPage({ params }: PageProps) {
         </section>
       )}
 
+      {(bs?.facebook || bs?.instagram || bs?.tiktok || bs?.sitioWeb) && (
+        <section className="border-t py-6">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-4 px-4 text-sm text-muted-foreground">
+            {bs?.facebook && (
+              <a href={bs.facebook.startsWith('http') ? bs.facebook : `https://facebook.com/${bs.facebook}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">
+                <Facebook className="size-4" /> Facebook
+              </a>
+            )}
+            {bs?.instagram && (
+              <a href={bs.instagram.startsWith('http') ? bs.instagram : `https://instagram.com/${bs.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">
+                <Instagram className="size-4" /> Instagram
+              </a>
+            )}
+            {bs?.sitioWeb && (
+              <a href={bs.sitioWeb.startsWith('http') ? bs.sitioWeb : `https://${bs.sitioWeb}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">
+                <Globe className="size-4" /> Sitio web
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-        &copy; 2024 {business.nombre}. Powered by Mocoa Market.
+        &copy; 2026 {business.nombre}. Powered by Mocoa Market.
       </footer>
     </>
   );

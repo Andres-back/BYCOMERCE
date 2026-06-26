@@ -17,6 +17,7 @@ export interface AssistantContext {
   userId: string;
   userName?: string;
   businessName?: string;
+  businessType?: string;
   userRole?: string;
 }
 
@@ -67,4 +68,4 @@ export interface ChatResponse {
   sessionId: string;
 }
 
-export const LOW_CONFIDENCE_THRESHOLD = 0.35;
+export const LOW_CONFIDENCE_THRESHOLD = 0.55;

@@ -16,7 +16,7 @@ async function bootstrap() {
     origin: config.get<string[]>('allowedOrigins') ?? ['http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Id', 'Idempotency-Key', 'X-Request-Id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Tenant-Id', 'Idempotency-Key', 'X-Request-Id'],
   });
 
   app.setGlobalPrefix('api/v1', {
@@ -39,4 +39,3 @@ async function bootstrap() {
 }
 
 void bootstrap();
-
