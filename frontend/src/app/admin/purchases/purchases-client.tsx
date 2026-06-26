@@ -54,6 +54,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuthStore } from '@/stores/auth-store';
 import { listProducts } from '@/services/inventory/inventory.service';
+import { csrfHeaders } from '@/services/api/client';
 import type { ApiEnvelope, Purchase, PurchasePaymentStatus, Supplier } from '@/types/api';
 import type { PurchaseFilters } from '@/services/procurement/procurement.service';
 
@@ -175,7 +176,8 @@ async function uploadInvoiceFile(file: File, token: string) {
     `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
     {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: csrfHeaders(),
+      credentials: 'include',
       body: formData,
     },
   );

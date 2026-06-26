@@ -148,7 +148,7 @@ export const superadminService = {
     apiPost<unknown, { motivo?: string }>(`/superadmin/payments/${id}/reject`, { motivo }, token),
 
   impersonate: (token: string, userId: string) =>
-    apiPost<{ accessToken: string; user: { id: string; nombre: string; email: string; rol: string } }, { userId: string }>('/auth/impersonate', { userId }, token),
+    apiPost<{ authenticated: true; user: { id: string; nombre: string; email: string; rol: string } }, { userId: string }>('/auth/impersonate', { userId }, token),
 
   auditLogs: (token: string, params?: { tenantId?: string; accion?: string; page?: number; pageSize?: number }) => {
     const search = new URLSearchParams();

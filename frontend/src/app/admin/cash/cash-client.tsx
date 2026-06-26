@@ -38,6 +38,7 @@ import {
 } from '@/hooks/use-finance';
 import { useAuthStore } from '@/stores/auth-store';
 import type { ApiEnvelope } from '@/types/api';
+import { csrfHeaders } from '@/services/api/client';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Expense } from '@/types/api';
 
@@ -114,7 +115,8 @@ async function uploadExpenseReceipt(file: File, token: string) {
     `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
     {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: csrfHeaders(),
+      credentials: 'include',
       body: formData,
     },
   );

@@ -18,7 +18,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/admin')) {
-    const token = request.cookies.get('mocoa-auth')?.value;
+    const token = request.cookies.get('mocoa-access')?.value;
     if (!token) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);

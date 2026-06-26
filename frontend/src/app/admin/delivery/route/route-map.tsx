@@ -80,5 +80,5 @@ export default function RouteMap({ business, orders, onSelectOrder }: RouteMapPr
     };
   }, [business, orders, onSelectOrder]);
 
-  return <div ref={mapRef} className="h-[500px] w-full rounded-lg border" />;
+  return <div ref={mapRef} className="h-[360px] w-full rounded-lg border lg:h-[420px]" />;
 }

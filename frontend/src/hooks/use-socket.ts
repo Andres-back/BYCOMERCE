@@ -4,18 +4,18 @@ import { useEffect } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 
 let globalSocket: Socket | null = null;
 
-function getSocket(token: string): Socket {
+function getSocket(): Socket {
   if (globalSocket?.connected) return globalSocket;
 
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001';
 
   globalSocket = io(wsUrl, {
-    auth: { token },
     transports: ['websocket', 'polling'],
+    withCredentials: true,
     reconnection: true,
     reconnectionDelay: 2000,
     reconnectionAttempts: 10,
@@ -25,13 +25,13 @@ function getSocket(token: string): Socket {
 }
 
 export function useSocket() {
-  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
-    const socket = getSocket(token);
+    const socket = getSocket();
 
     if (!socket.connected) {
       socket.connect();
@@ -62,7 +62,7 @@ export function useSocket() {
 
     const handleOrderCreated = () => {
       invalidateOrders();
-      toast.info('Nuevo pedido', { description: 'Pedido recibido' });
+      appToast.info('Nuevo pedido', { id: 'socket-order-created', description: 'Pedido recibido' });
     };
 
     const handleOrderStatusChanged = () => {
@@ -97,7 +97,7 @@ export function useSocket() {
       socket.off('notification', invalidateNotifications);
       socket.off('disconnect', handleDisconnect);
     };
-  }, [token, qc]);
+  }, [isAuthenticated, qc]);
 
   return globalSocket;
 }

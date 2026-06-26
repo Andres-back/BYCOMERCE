@@ -9,7 +9,7 @@ import { authService } from '@/services/auth/auth.service';
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { token, isAuthenticated } = useAuth();
   const setSession = useAuthStore((s) => s.setSession);
-  const logout = useAuthStore((s) => s.logout);
+  const clearSession = useAuthStore((s) => s.clearSession);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -21,10 +21,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     let cancelled = false;
     authService.me(token).then((user) => {
-      if (!cancelled) setSession(token, user);
+      if (!cancelled) setSession(user);
     }).catch(() => {
       if (!cancelled) {
-        logout();
+        clearSession();
         router.replace('/auth/login');
       }
     });

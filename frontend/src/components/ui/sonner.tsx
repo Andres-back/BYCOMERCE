@@ -37,10 +37,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
         } as React.CSSProperties
       }
       toastOptions={{
+        duration: 4500,
         classNames: {
           toast: "cn-toast",
         },
       }}
+      position="bottom-right"
       {...props}
     />
   )

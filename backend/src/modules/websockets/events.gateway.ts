@@ -14,6 +14,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RoleName } from '../../database/prisma-client';
+import { ACCESS_COOKIE, parseCookieHeader } from '../../common/security/cookies';
 
 type JwtPayload = {
   sub: string;
@@ -51,7 +52,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect, 
 
   async handleConnection(client: Socket) {
     try {
-      const token: string = (client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '')) as string;
+      const cookies = parseCookieHeader(client.handshake.headers.cookie);
+      const token: string = (
+        cookies[ACCESS_COOKIE] ||
+        client.handshake.auth?.token ||
+        client.handshake.headers?.authorization?.replace('Bearer ', '')
+      ) as string;
       if (!token) {
         throw new WsException('Token requerido');
       }

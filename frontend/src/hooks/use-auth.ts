@@ -1,11 +1,20 @@
 import { useAuthStore } from '@/stores/auth-store';
+import { authService } from '@/services/auth/auth.service';
 
 export function useAuth() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setSession = useAuthStore((s) => s.setSession);
-  const logout = useAuthStore((s) => s.logout);
+  const clearSession = useAuthStore((s) => s.clearSession);
+
+  async function logout() {
+    try {
+      await authService.logout();
+    } finally {
+      clearSession();
+    }
+  }
 
   return {
     token,

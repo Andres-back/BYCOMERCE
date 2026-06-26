@@ -17,7 +17,10 @@ import { AppIcon } from '@/components/shared/app-icon';
 import { CommandPalette } from '@/components/shared/command-palette';
 import { AssistantButton } from '@/components/shared/assistant-button';
 import { useTheme } from 'next-themes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { authService } from '@/services/auth/auth.service';
+import { useAuthStore } from '@/stores/auth-store';
+import { useI18n } from '@/providers/i18n-provider';
 
 type RoleAccess = 'ADMIN_NEGOCIO' | 'SUPERVISOR' | 'CAJERO' | 'DOMICILIARIO';
 
@@ -94,6 +97,7 @@ function NavLink({ href, label, icon, exact, pathname, collapsed }: {
 
 function SidebarContent({ pathname }: { pathname: string }) {
   const { user, logout, isSuperAdmin } = useAuth();
+  const { t } = useI18n();
   const branding = useBranding();
   const initials = user?.nombre?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '??';
   const [collapsed] = useState(false);
@@ -101,7 +105,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--color-sidebar)' }}>
       {/* Logo */}
-      <div className={cn('flex items-center gap-3 border-b border-sidebar-border px-4', collapsed ? 'justify-center py-4' : 'py-4')}>
+      <div className={cn('flex h-14 items-center gap-3 border-b border-sidebar-border px-4', collapsed && 'justify-center')}>
         {branding.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={branding.logo} alt={branding.businessName} className="size-9 rounded-lg object-cover ring-1 ring-primary/20" />
@@ -117,12 +121,12 @@ function SidebarContent({ pathname }: { pathname: string }) {
       </div>
 
       {/* Navigation */}
-      <nav className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-3">
+      <nav className="scrollbar-thin min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
         {/* Dashboard */}
         <div className="space-y-1">
           <NavLink
             href="/admin"
-            label="Dashboard"
+            label={t('nav.panel')}
             icon="dashboard"
             exact
             pathname={pathname}
@@ -183,7 +187,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
             variant="ghost"
             size="icon"
             className="size-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            onClick={() => { logout(); window.location.href = '/auth/login'; }}
+            onClick={() => { void logout().finally(() => { window.location.href = '/auth/login'; }); }}
             title="Cerrar sesión"
           >
             <LogOut className="size-4" />
@@ -199,19 +203,56 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   useSocket();
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const setSession = useAuthStore((s) => s.setSession);
+  const clearSession = useAuthStore((s) => s.clearSession);
+  const [bootstrapping, setBootstrapping] = useState(!user);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (user) {
+      setBootstrapping(false);
+      return;
+    }
+
+    authService.me()
+      .then((sessionUser) => {
+        if (!cancelled) setSession(sessionUser);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          clearSession();
+          window.location.href = '/auth/login';
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setBootstrapping(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [clearSession, setSession, user]);
+
+  if (bootstrapping || !isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <BrandingProvider>
       <CommandPalette />
       <AssistantButton />
-      <div className="admin-shell-bg flex min-h-screen">
+      <div className="admin-shell-bg flex h-screen overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-64 shrink-0 border-r border-border shadow-sm lg:block" style={{ backgroundColor: 'var(--color-sidebar)' }}>
+        <aside className="hidden h-screen w-64 shrink-0 border-r border-border shadow-sm lg:block" style={{ backgroundColor: 'var(--color-sidebar)' }}>
           <SidebarContent pathname={pathname} />
         </aside>
 
         {/* Main */}
-        <div className="flex flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
           <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-xl lg:px-6">
             <Sheet>
@@ -246,7 +287,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
           </header>
 
           {/* Content */}
-          <main className="min-w-0 flex-1 overflow-hidden p-4 lg:p-6 xl:p-8">{children}</main>
+          <main className="scrollbar-thin min-h-0 min-w-0 flex-1 overflow-y-auto p-4 lg:p-6 xl:p-8">{children}</main>
         </div>
       </div>
     </BrandingProvider>

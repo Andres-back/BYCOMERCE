@@ -8,8 +8,12 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'node:crypto';
+import { Response } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -28,6 +32,7 @@ import {
   AuditLogQueryDto,
 } from './dto/superadmin.dto';
 import { AuthService } from '../auth/auth.service';
+import { ACCESS_COOKIE, CSRF_COOKIE } from '../../common/security/cookies';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,6 +41,7 @@ export class SuperadminController {
   constructor(
     private readonly superadminService: SuperadminService,
     private readonly authService: AuthService,
+    private readonly config: ConfigService,
   ) {}
 
   @Get('superadmin/stats')
@@ -174,13 +180,17 @@ export class SuperadminController {
   }
 
   @Post('auth/impersonate')
-  async loginAsUser(@Body() dto: ImpersonateDto, @CurrentUser() user: RequestUser) {
+  async loginAsUser(
+    @Body() dto: ImpersonateDto,
+    @CurrentUser() user: RequestUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const target = await this.superadminService.impersonate(dto.userId, {
       id: user.id,
       tenantId: user.tenantId,
     });
 
-    return this.authService.impersonateIssue(
+    const tokens = await this.authService.impersonateIssue(
       { id: user.id, email: user.email, rol: user.rol, tenantId: user.tenantId!, isSuperAdmin: true },
       {
         id: target.userId,
@@ -191,5 +201,22 @@ export class SuperadminController {
         isSuperAdmin: false,
       },
     );
+    const secure = this.config.get<string>('nodeEnv') === 'production';
+    const accessTtl = this.config.get<number>('jwt.accessTtl') ?? 900;
+    response.cookie(ACCESS_COOKIE, tokens.accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+      path: '/',
+      maxAge: accessTtl * 1000,
+    });
+    response.cookie(CSRF_COOKIE, randomBytes(32).toString('base64url'), {
+      httpOnly: false,
+      sameSite: 'lax',
+      secure,
+      path: '/',
+      maxAge: accessTtl * 1000,
+    });
+    return this.authService.toSession(tokens);
   }
 }

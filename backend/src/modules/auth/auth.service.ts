@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { EstadoGeneral, SubscriptionStatus, User } from '../../database/prisma-client';
+import { EstadoGeneral, RefreshRevokedReason, SubscriptionStatus, User } from '../../database/prisma-client';
 import * as bcrypt from 'bcrypt';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
@@ -15,6 +15,7 @@ import { LoginDto } from './dto/login.dto';
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  jti: string;
   user: {
     id: string;
     nombre: string;
@@ -25,6 +26,10 @@ export interface AuthTokens {
   };
   expiresIn: number;
 }
+
+export type AuthSession = Omit<AuthTokens, 'accessToken' | 'refreshToken' | 'jti'> & {
+  authenticated: true;
+};
 
 @Injectable()
 export class AuthService {
@@ -95,6 +100,78 @@ export class AuthService {
     return this.issueTokens(user, ip, userAgent);
   }
 
+  async refresh(refreshToken: string | undefined, ip?: string, userAgent?: string): Promise<AuthTokens> {
+    if (!refreshToken) throw new UnauthorizedException('Sesion expirada');
+
+    const tokenHash = this.hash(refreshToken);
+    const stored = await this.prisma.refreshToken.findFirst({
+      where: {
+        tokenHash,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: { user: { include: { tenant: true } } },
+    });
+
+    if (!stored || stored.user.estado !== EstadoGeneral.ACTIVO) {
+      throw new UnauthorizedException('Sesion expirada');
+    }
+
+    if (stored.user.tenantId && stored.user.tenant?.estado !== EstadoGeneral.ACTIVO) {
+      throw new ForbiddenException('Tenant inactivo');
+    }
+
+    const tokens = await this.issueTokens(stored.user, ip, userAgent);
+    await this.prisma.refreshToken.update({
+      where: { id: stored.id },
+      data: {
+        revokedAt: new Date(),
+        replacedBy: tokens.jti,
+      },
+    });
+
+    return tokens;
+  }
+
+  async logout(refreshToken: string | undefined, userId?: string): Promise<{ ok: true }> {
+    if (refreshToken) {
+      await this.prisma.refreshToken.updateMany({
+        where: {
+          tokenHash: this.hash(refreshToken),
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+          revokedReason: RefreshRevokedReason.LOGOUT,
+        },
+      });
+      return { ok: true };
+    }
+
+    if (userId) {
+      await this.prisma.refreshToken.updateMany({
+        where: {
+          userId,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+          revokedReason: RefreshRevokedReason.LOGOUT,
+        },
+      });
+    }
+
+    return { ok: true };
+  }
+
+  toSession(tokens: AuthTokens): AuthSession {
+    return {
+      authenticated: true,
+      user: tokens.user,
+      expiresIn: tokens.expiresIn,
+    };
+  }
+
   private async findLoginUser(dto: LoginDto) {
     if (dto.tenantSlug) {
       return this.prisma.user.findFirst({
@@ -150,6 +227,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      jti,
       user: {
         id: user.id,
         nombre: user.nombre,
@@ -227,6 +305,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken: '',
+      jti,
       user: {
         id: targetUser.id,
         nombre: targetUser.nombre,

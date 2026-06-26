@@ -1,17 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Loader2, Store } from 'lucide-react';
-import { toast } from 'sonner';
+import { ArrowLeft, Eye, EyeOff, Loader2, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authService } from '@/services/auth/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { appToast } from '@/lib/app-toast';
 
 const loginSchema = z.object({
   email: z.email('Ingresa un email válido'),
@@ -25,10 +26,12 @@ const DEMO_CREDENTIALS = [
   { label: 'Admin', email: 'admin@demo.com', password: 'Admin1234!', tenantSlug: 'tienda-demo-mocoa' },
   { label: 'Supervisor', email: 'supervisor@demo.com', password: 'Super1234!', tenantSlug: 'tienda-demo-mocoa' },
   { label: 'Cajero', email: 'cajero@demo.com', password: 'Cajero1234!', tenantSlug: 'tienda-demo-mocoa' },
+  { label: 'Domiciliario', email: 'domiciliario@demo.com', password: 'Domi1234!', tenantSlug: 'tienda-demo-mocoa' },
 ];
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,13 +58,11 @@ export function LoginForm() {
         password: data.password,
         tenantSlug: data.tenantSlug || undefined,
       });
-      setSession(result.accessToken, result.user);
-      if (result.refreshToken) {
-        localStorage.setItem('mocoa_refresh_token', result.refreshToken);
-      }
-      router.push('/admin');
+      setSession(result.user);
+      const redirect = searchParams.get('redirect');
+      router.push(redirect?.startsWith('/admin') ? redirect : '/admin');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'No fue posible iniciar sesión');
+      appToast.error(err instanceof Error ? err.message : 'No fue posible iniciar sesión', { id: 'auth-login-error' });
     } finally {
       setLoading(false);
     }
@@ -81,6 +82,15 @@ export function LoginForm() {
         </div>
         <span className="text-lg font-bold">Mocoa Market</span>
       </div>
+
+      <Link
+        href="/"
+        className="-ml-2 flex w-fit items-center rounded-lg px-2 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <ArrowLeft className="mr-1.5 size-4" />
+        Volver a Mocoa Market
+      </Link>
+
       <div className="space-y-1.5">
         <h1 className="text-2xl font-bold tracking-tight">Iniciar sesión</h1>
         <p className="text-sm text-muted-foreground">
@@ -127,7 +137,7 @@ export function LoginForm() {
           <Label htmlFor="tenantSlug">Negocio</Label>
           <Input
             id="tenantSlug"
-            placeholder="Opcional — se detecta automáticamente"
+            placeholder="Opcional - se detecta automáticamente"
             autoComplete="off"
             {...register('tenantSlug')}
           />
@@ -142,13 +152,13 @@ export function LoginForm() {
 
       <div className="space-y-2">
         <p className="text-xs text-muted-foreground text-center">Acceso rápido de demostración</p>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {DEMO_CREDENTIALS.map((creds) => (
             <Button
               key={creds.label}
               variant="outline"
               size="sm"
-              className="flex-1 text-xs"
+              className="text-xs"
               type="button"
               onClick={() => fillDemo(creds)}
               disabled={loading}

@@ -4,6 +4,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
+import { I18nProvider } from '@/providers/i18n-provider';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -21,11 +22,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <ThemeProvider>
           <QueryProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster richColors closeButton />
-              <ThemeToggle />
-            </TooltipProvider>
+            <I18nProvider>
+              <TooltipProvider>
+                {children}
+                <Toaster richColors closeButton />
+                <ThemeToggle />
+              </TooltipProvider>
+            </I18nProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 import type { ApiEnvelope } from '@/types/api';
+import { csrfHeaders } from '@/services/api/client';
 
 interface UploadResponse {
   key: string;
@@ -70,7 +71,8 @@ export function ImageUploader({
         `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
         {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: csrfHeaders(),
+          credentials: 'include',
           body: formData,
         },
       );
@@ -213,7 +215,8 @@ export function MultiImageUploader({
           `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}/uploads/upload`,
           {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: csrfHeaders(),
+            credentials: 'include',
             body: formData,
           },
         );

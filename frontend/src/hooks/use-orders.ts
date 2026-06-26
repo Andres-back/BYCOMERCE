@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { queryKeys } from '@/lib/query-keys';
 import {
   listOrders,
@@ -52,9 +52,9 @@ export function useConfirmOrder(token: string) {
     mutationFn: (orderId: string) => confirmOrder(token, orderId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido confirmado');
+      appToast.success('Pedido confirmado');
     },
-    onError: () => toast.error('No fue posible confirmar el pedido'),
+    onError: () => appToast.error('No fue posible confirmar el pedido'),
   });
 }
 
@@ -65,9 +65,9 @@ export function useRejectOrder(token: string) {
       rejectOrder(token, orderId, motivo),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido rechazado');
+      appToast.success('Pedido rechazado');
     },
-    onError: () => toast.error('No fue posible rechazar el pedido'),
+    onError: () => appToast.error('No fue posible rechazar el pedido'),
   });
 }
 
@@ -78,9 +78,9 @@ export function useCancelOrder(token: string) {
       cancelOrder(token, orderId, motivo),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido cancelado');
+      appToast.success('Pedido cancelado');
     },
-    onError: () => toast.error('No fue posible cancelar el pedido'),
+    onError: () => appToast.error('No fue posible cancelar el pedido'),
   });
 }
 
@@ -90,9 +90,9 @@ export function usePreparingOrder(token: string) {
     mutationFn: (orderId: string) => markOrderPreparing(token, orderId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido en preparacion');
+      appToast.success('Pedido en preparación');
     },
-    onError: () => toast.error('No fue posible marcar el pedido en preparacion'),
+    onError: () => appToast.error('No fue posible marcar el pedido en preparación'),
   });
 }
 
@@ -102,9 +102,9 @@ export function useReadyOrder(token: string) {
     mutationFn: (orderId: string) => markOrderReady(token, orderId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido listo para entrega');
+      appToast.success('Pedido listo para entrega');
     },
-    onError: () => toast.error('No fue posible marcar el pedido como listo'),
+    onError: () => appToast.error('No fue posible marcar el pedido como listo'),
   });
 }
 
@@ -114,9 +114,9 @@ export function useDispatchOrder(token: string) {
     mutationFn: (orderId: string) => dispatchOrder(token, orderId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido despachado');
+      appToast.success('Pedido despachado');
     },
-    onError: () => toast.error('No fue posible despachar el pedido'),
+    onError: () => appToast.error('No fue posible despachar el pedido'),
   });
 }
 
@@ -132,9 +132,9 @@ export function useDeliverOrder(token: string) {
     }) => deliverOrder(token, orderId, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Pedido entregado');
+      appToast.success('Pedido entregado');
     },
-    onError: () => toast.error('No fue posible entregar el pedido'),
+    onError: () => appToast.error('No fue posible entregar el pedido'),
   });
 }
 
@@ -153,8 +153,8 @@ export function useAssignDelivery(token: string) {
       assignDelivery(token, orderId, deliveryUserId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success('Domiciliario asignado');
+      appToast.success('Domiciliario asignado');
     },
-    onError: () => toast.error('No fue posible asignar domiciliario'),
+    onError: () => appToast.error('No fue posible asignar domiciliario'),
   });
 }

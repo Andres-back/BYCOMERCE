@@ -3,6 +3,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+if (typeof window !== 'undefined') {
+  localStorage.removeItem('mocoa_access_token');
+  localStorage.removeItem('mocoa_refresh_token');
+  localStorage.removeItem('mocoa-auth');
+}
+
 interface AuthUser {
   id: string;
   nombre: string;
@@ -15,8 +21,8 @@ interface AuthUser {
 interface AuthState {
   token: string | null;
   user: AuthUser | null;
-  setSession: (token: string, user: AuthUser) => void;
-  logout: () => void;
+  setSession: (user: AuthUser) => void;
+  clearSession: () => void;
   isAuthenticated: boolean;
 }
 
@@ -26,25 +32,21 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
-      setSession: (token, user) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('mocoa_access_token', token);
-          document.cookie = `mocoa-auth=${token}; path=/; max-age=86400; SameSite=Lax`;
-        }
-        set({ token, user, isAuthenticated: true });
+      setSession: (user) => {
+        set({ token: 'cookie-session', user, isAuthenticated: true });
       },
-      logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('mocoa_access_token');
-          document.cookie = 'mocoa-auth=; path=/; max-age=0';
-        }
+      clearSession: () => {
         set({ token: null, user: null, isAuthenticated: false });
       },
     }),
     {
-      name: 'mocoa-auth',
+      name: 'mocoa-session',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        token: state.isAuthenticated ? 'cookie-session' : null,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     },
   ),
 );
